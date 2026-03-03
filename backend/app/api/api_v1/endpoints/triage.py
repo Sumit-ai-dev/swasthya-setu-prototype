@@ -1,0 +1,109 @@
+import uuid
+import json
+import boto3
+from fastapi import APIRouter, HTTPException
+from app.schemas.triage import TriageRequest, TriageResponse
+from app.core.config import settings
+
+router = APIRouter()
+
+
+def _build_triage_prompt(symptoms: list, language: str) -> str:
+    symptom_str = ", ".join(symptoms)
+    lang_instruction = "Respond in Hindi." if language == "hi" else "Respond in English."
+
+    return f"""You are a clinical triage assistant for rural India healthcare workers.
+
+Patient symptoms: {symptom_str}
+
+Classify this case as one of:
+- GREEN: Safe for home care
+- YELLOW: Needs pharmacy or basic clinic visit
+- RED: Requires immediate specialist or hospital attention
+
+{lang_instruction}
+
+Return a JSON object exactly like this:
+{{
+  "triage_level": "GREEN" | "YELLOW" | "RED",
+  "confidence": 0.0 to 1.0,
+  "advice": "clear actionable advice in 2-3 sentences"
+}}
+
+Return ONLY the JSON. No explanation outside the JSON."""
+
+
+@router.post("/triage", response_model=TriageResponse)
+def symptom_triage(payload: TriageRequest):
+    """
+    Accepts symptoms and returns a triage classification (GREEN/YELLOW/RED)
+    using Amazon Bedrock (Claude 3 Haiku).
+
+    Falls back to rule-based classification when Bedrock is unavailable (local dev).
+    """
+    prompt = _build_triage_prompt(payload.symptoms, payload.language)
+
+    try:
+        client = boto3.client(
+            "bedrock-runtime",
+            region_name=settings.AWS_REGION,
+        )
+        body = json.dumps({
+            "anthropic_version": "bedrock-2023-05-31",
+            "max_tokens": 256,
+            "temperature": 0.1,
+            "messages": [{"role": "user", "content": prompt}]
+        })
+        response = client.invoke_model(
+            modelId=settings.TRIAGE_MODEL_ID,
+            body=body,
+            contentType="application/json",
+            accept="application/json",
+        )
+        result = json.loads(response["body"].read())
+        text = result["content"][0]["text"]
+        parsed = json.loads(text)
+
+        return TriageResponse(
+            triage_level=parsed["triage_level"],
+            confidence=parsed["confidence"],
+            advice=parsed["advice"],
+            language=payload.language,
+            consultation_id=str(uuid.uuid4()),
+        )
+
+    except Exception:
+        # --- Local dev fallback (rule-based) ---
+        symptoms_lower = [s.lower() for s in payload.symptoms]
+        red_flags = ["chest pain", "difficulty breathing", "unconscious", "seizure", "stroke"]
+        yellow_flags = ["fever", "vomiting", "diarrhea", "headache", "cough"]
+
+        if any(f in s for f in red_flags for s in symptoms_lower):
+            level, confidence, advice = (
+                "RED", 0.90,
+                "Serious symptoms detected. Go to the nearest hospital immediately. Do not wait."
+                if payload.language == "en" else
+                "गंभीर लक्षण। तुरंत निकटतम अस्पताल जाएं।"
+            )
+        elif any(f in s for f in yellow_flags for s in symptoms_lower):
+            level, confidence, advice = (
+                "YELLOW", 0.78,
+                "Moderate symptoms. Visit a nearby pharmacy or clinic for assessment and medicine."
+                if payload.language == "en" else
+                "मध्यम लक्षण। नज़दीकी फार्मेसी या क्लिनिक जाएं।"
+            )
+        else:
+            level, confidence, advice = (
+                "GREEN", 0.85,
+                "Symptoms appear mild. Rest, stay hydrated, and monitor. Consult a doctor if they worsen."
+                if payload.language == "en" else
+                "लक्षण हल्के हैं। आराम करें और पानी पिएं। यदि बदतर हों तो डॉक्टर से मिलें।"
+            )
+
+        return TriageResponse(
+            triage_level=level,
+            confidence=confidence,
+            advice=advice,
+            language=payload.language,
+            consultation_id=str(uuid.uuid4()),
+        )
