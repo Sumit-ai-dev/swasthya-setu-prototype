@@ -109,6 +109,11 @@ pytest -v
 
 ## 🤝 Contribution Strategy
 
-Please ensure you are pushing cleanly to your respective folders (`/backend` or `/frontend`). If modifying the FastAPI models, run `pytest` before committing to ensure no schemas are broken.
+We follow a strict Open Source PR workflow to keep the codebase clean. 
+**Please read the [CONTRIBUTING.md](./CONTRIBUTING.md) guide before pushing any code!** This guide covers:
+- Branch naming conventions (`feat/`, `fix/`)
+- Commit message guidelines
+- How to open Pull Requests (PRs)
+- The Phase 1, Phase 2, and Phase 3 Hackathon Checklists
 
 *Built for the 2026 AI For Bharat Hackathon* 🇮🇳
