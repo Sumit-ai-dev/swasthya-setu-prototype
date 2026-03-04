@@ -76,19 +76,19 @@ This is the exact workflow you must follow for every task:
 
 To stay aligned with the March 8th submission deadline, focus on these phases:
 
-### Phase 1: MVP Core (Currently Here 📍)
+### Phase 1: MVP Core (Completed ✅)
 - [x] Backend API Base (Triage, Chatbot, Analytics)
 - [x] Frontend React Scaffold
-- [ ] Connect Frontend App to Backend APIs using Axios
-- [ ] Implement local Vector DB (pgvector) for medical rules
+- [x] Connect Frontend App to Backend APIs using Axios
+- [x] Implement local Vector DB (pgvector) + HuggingFace embeddings for medical rules
 
-### Phase 2: Refinement & Security
-- [ ] Setup AWS standard credentials securely (IAM)
-- [ ] Connect RAG chatbot to actual WHO data chunks in VectorDB
+### Phase 2: Refinement & Security (Currently Here 📍)
+- [x] Connect RAG chatbot to actual WHO data chunks in VectorDB
+- [ ] Setup AWS standard credentials securely (IAM) for Bedrock generation
 - [ ] Polish Tailwind CSS UI for Mobile Responsiveness
 
 ### Phase 3: Deployment & Presentation (Target: March 6-7)
-- [ ] Deploy FastAPI to AWS Lambda (using the Mangum handler)
+- [ ] Deploy FastAPI to AWS Lambda (using the Mangum handler) + RDS Proxy
 - [ ] Deploy React UI to AWS S3 / Netlify / Vercel
 - [ ] Record Demo Video (Max 3 mins)
 - [ ] Finalize Hackathon Submission Doc

@@ -31,11 +31,12 @@ The architecture is built for AWS deployment (Lambda, API Gateway, S3, RDS) to s
 
 ### **Backend API** (`/backend`)
 - **FastAPI** (Python 3.11)
-- **Amazon Bedrock**: 
+- **Amazon Bedrock** (Production Optional): 
   - `Claude 3 Haiku` for fast symptom triage
   - `Llama 3` for RAG-based chatbot responses
-- **PostgreSQL + pgvector**: For document embedding retrieval and analytics (In Progress)
-- AWS Lambda via **Mangum** adapter
+- **HuggingFace Sentence-Transformers**: Local embeddings (`all-MiniLM-L6-v2`) for offline development without AWS keys.
+- **PostgreSQL + pgvector**: Vector database for document embedding retrieval (runs locally via Docker).
+- **AWS Lambda**: Deployable via the **Mangum** adapter.
 
 ---
 
@@ -43,10 +44,14 @@ The architecture is built for AWS deployment (Lambda, API Gateway, S3, RDS) to s
 
 ### 1. Start the Backend API
 
-The backend comes with local rule-based fallbacks, meaning **you can test the API locally without AWS credentials**.
+You will need **Docker Desktop** running to spin up the local PostgreSQL + `pgvector` database.
+The backend defaults to local HuggingFace embeddings (`all-MiniLM-L6-v2`), meaning **you can test the RAG API locally without AWS credentials**.
 
 ```bash
 cd backend
+
+# Start the local pgvector database
+docker compose up -d
 
 # Setup Python environment
 python -m venv venv
@@ -57,6 +62,10 @@ pip install -r requirements.txt
 
 # Configure environment variables
 cp .env.example .env
+
+# Run the database seeding script (Loads WHO rules into pgvector)
+export PYTHONPATH=.
+python app/scripts/seed_medical_data.py
 
 # Run the API server
 uvicorn app.main:app --reload
@@ -100,8 +109,8 @@ pytest -v
 - [x] `POST /api/v1/chatbot` - RAG-based AI medical chatbot API
 - [x] `GET /api/v1/analytics/summary` - Usage statistics API
 - [x] Frontend React + Tailwind scaffolding
-- [ ] Connect Frontend React UI to Backend APIs
-- [ ] Load WHO medical documents into pgvector knowledge base
+- [x] Connect Frontend React UI to Backend APIs
+- [x] Load WHO medical documents into pgvector knowledge base via `seed_medical_data.py`
 - [ ] Deploy Backend to AWS Lambda
 - [ ] Deploy Frontend to Amazon S3 / CloudFront
 
