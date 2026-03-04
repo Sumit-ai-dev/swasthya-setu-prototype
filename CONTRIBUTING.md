@@ -82,10 +82,10 @@ To stay aligned with the March 8th submission deadline, focus on these phases:
 - [x] Connect Frontend App to Backend APIs using Axios
 - [x] Implement local Vector DB (pgvector) + HuggingFace embeddings for medical rules
 
-### Phase 2: Refinement & Security (Currently Here 📍)
+### Phase 2: Refinement & Security (Completed ✅)
 - [x] Connect RAG chatbot to actual WHO data chunks in VectorDB
-- [ ] Setup AWS standard credentials securely (IAM) for Bedrock generation
-- [ ] Polish Tailwind CSS UI for Mobile Responsiveness
+- [x] Setup AWS standard credentials securely (IAM) for Bedrock generation
+- [x] Polish Tailwind CSS UI for Mobile Responsiveness
 
 ### Phase 3: Deployment & Presentation (Target: March 6-7)
 - [ ] Deploy FastAPI to AWS Lambda (using the Mangum handler) + RDS Proxy
