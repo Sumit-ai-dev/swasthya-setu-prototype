@@ -41,14 +41,22 @@ def health_chatbot(payload: ChatMessage):
     # Step 1 & 2: RAG retrieval + prompt construction
     context, sources = search_patient_query(payload.message)
     prompt = build_medical_assistant_prompt(
-        payload.message, payload.language, context, history
+        message=payload.message,
+        context=context,
+        language=payload.language,
+        history=history,
     )
 
     response_text = None
 
     # Step 3: Try Bedrock LLM
     try:
-        client = boto3.client("bedrock-runtime", region_name=settings.AWS_REGION)
+        # Use AWS_PROFILE session if configured (local dev), else default chain (Lambda)
+        if settings.AWS_PROFILE:
+            session = boto3.Session(profile_name=settings.AWS_PROFILE)
+            client = session.client("bedrock-runtime", region_name=settings.AWS_REGION)
+        else:
+            client = boto3.client("bedrock-runtime", region_name=settings.AWS_REGION)
         body = json.dumps({
             "prompt": (
                 f"<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n"

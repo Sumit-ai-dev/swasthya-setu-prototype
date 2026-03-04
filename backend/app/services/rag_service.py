@@ -121,9 +121,9 @@ def search_patient_query(
 
 def build_medical_assistant_prompt(
     message: str,
-    language: str,
     context: str,
-    history: list,
+    language: str = "en",
+    history: list = None,
 ) -> str:
     """
     Constructs a strict system prompt that forces the LLM to use only

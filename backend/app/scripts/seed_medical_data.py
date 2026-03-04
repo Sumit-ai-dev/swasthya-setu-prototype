@@ -5,7 +5,7 @@ Seeds the pgvector database with sample medical guidelines.
 
 Follows the RAG ingestion pipeline:
   1. Load raw medical text data
-  2. Chunk text using RecursiveCharacterTextSplitter (size=500, overlap=50)
+  2. Chunk text using RecursiveCharacterTextSplitter (size=700, overlap=100)
   3. Generate embeddings via configured provider (local HuggingFace or Bedrock)
   4. Insert into PGVector
 
