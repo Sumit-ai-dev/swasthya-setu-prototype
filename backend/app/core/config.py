@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import Optional
 
 
 class Settings(BaseSettings):
@@ -9,10 +10,14 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
 
-    # AWS / Bedrock
+    # AWS Config
+    # Uses Default Credential Provider Chain (IAM Role or ~/.aws/credentials)
+    # Never hardcode keys in production. Use AWS SSO locally (aws sso login).
     AWS_REGION: str = "ap-south-1"
-    AWS_ACCESS_KEY_ID: str = ""
-    AWS_SECRET_ACCESS_KEY: str = ""
+    AWS_PROFILE: Optional[str] = None
+    AWS_ACCESS_KEY_ID: Optional[str] = None
+    AWS_SECRET_ACCESS_KEY: Optional[str] = None
+    AWS_SESSION_TOKEN: Optional[str] = None
 
     # Bedrock model IDs
     TRIAGE_MODEL_ID: str = "anthropic.claude-3-haiku-20240307-v1:0"

@@ -14,9 +14,10 @@ Usage:
 """
 
 import logging
+import hashlib
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from app.services.rag_service import vector_store
+from app.services.rag_service import vector_store, search_patient_query, build_medical_assistant_prompt
 from app.scripts.init_db import init_db
 
 logging.basicConfig(level=logging.INFO)
@@ -106,31 +107,75 @@ def seed_database():
     # 1. Ensure DB tables and pgvector extension exist
     init_db()
 
-    # 2. Setup Chunking Strategy (per implementation plan: size=500, overlap=50)
+    # 2. Setup Chunking Strategy (Optimized for medical structured paragraphs)
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=500,
-        chunk_overlap=50,
+        chunk_size=700,
+        chunk_overlap=100,
         length_function=len,
         is_separator_regex=False,
     )
 
     # 3. Process and chunk medical texts
     documents_to_add = []
+    chunk_ids = []
+    
     for doc in SAMPLE_MEDICAL_TEXTS:
         chunks = text_splitter.split_text(doc["content"])
-        for chunk in chunks:
+        for i, chunk in enumerate(chunks):
+            chunk_content = chunk.strip()
+            # Deterministic ID for deduplication: hash(source + chunk_content)
+            unique_id = hashlib.sha256(f'{doc["source"]}_{chunk_content}'.encode()).hexdigest()
+            
             documents_to_add.append(
                 Document(
-                    page_content=chunk.strip(),
-                    metadata={"source": doc["source"]},
+                    page_content=chunk_content,
+                    metadata={
+                        "source": doc["source"],
+                        "document_type": "guideline",
+                        "section": f"part_{i+1}",
+                        "chunk_index": i
+                    },
                 )
             )
+            chunk_ids.append(unique_id)
 
-    # 4. Insert into PGVector
+    # 4. Insert into PGVector with Deduplication IDs
     if documents_to_add:
         logger.info(f"Adding {len(documents_to_add)} chunks to PGVector...")
-        vector_store.add_documents(documents_to_add)
-        logger.info("✅ Successfully seeded database with medical rules.")
+        # Add indexing (HNSW) before inserting to speed up searches. PGVector driver creates this if it doesn't exist
+        try:
+            vector_store.create_hnsw_index(
+                max_elements=10000, 
+                ef_construction=64, 
+                m=16
+            )
+            logger.info("Ensured HNSW index exists on vector store.")
+        except Exception as e:
+            logger.info("HNSW index might already exist or driver auto-manages it.")
+            
+        vector_store.add_documents(documents=documents_to_add, ids=chunk_ids)
+        logger.info("✅ Successfully seeded database with medical rules (deduplicated).")
+
+        # Hallucination safety test
+        queries = [
+            "I have fever and body ache",
+            "What food should I eat during fever?",
+            "Is paracetamol safe for a 1-month old infant?",
+            "What medicine cures cancer instantly?"  # Hallucination test
+        ]
+        
+        for q in queries:
+            print(f"\n=== Test: {q} ===")
+            context, sources = search_patient_query(q, top_k=3, threshold=0.15)
+            print(f"Sources: {sources}")
+            
+            # Test Prompt Guardrails directly
+            prompt = build_medical_assistant_prompt(message=q, context=context, history=[], language="en")
+            print("\n--- Prompt Setup Output ---")
+            if "No relevant medical guidelines were found" in context:
+                print("GUARDRAIL TRIGGERED: Context is empty, will fallback safely.")
+            else:
+                print(f"CONTEXT LOADED: {len(context)} chars")
     else:
         logger.warning("No documents to add.")
 

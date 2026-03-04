@@ -10,7 +10,7 @@ for the actual vector store operations. This model is kept for:
 """
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, DateTime, Text
+from sqlalchemy import Column, String, DateTime, Text, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from pgvector.sqlalchemy import Vector
 from app.db.database import Base
@@ -26,10 +26,19 @@ class MedicalDocumentChunk(Base):
     #   - local (all-MiniLM-L6-v2): 384
     #   - bedrock (titan-embed-text-v2): 1024
     # This column is for reference only; Langchain PGVector handles its own embedding column.
-    embedding = Column(Vector(384))
-    source = Column(String(255), nullable=False, index=True)
-    document_type = Column(String(100), nullable=True, default="guideline")
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    embedding = Column(Vector(384)) # Needs to match all-MiniLM-L6-v2 dimension
+
+    # Metadata fields mapping to LangChain's JSONB structure underneath
+    source = Column(String)
+    document_type = Column(String)
+    section = Column(String)
+    chunk_index = Column(Integer)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Note on Indexes:
+    # In production pgvector, an HNSW or IVFFlat index is critical for performance.
+    # Example for HNSW: CREATE INDEX idx_medical_embedding ON langchain_pg_embedding USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
+    # Langchain Postgres vectorstore auto-manages this table and index via `create_hnsw_index`.
 
     def __repr__(self):
         return f"<MedicalDocumentChunk id={self.id} source={self.source}>"

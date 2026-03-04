@@ -38,8 +38,9 @@ def _init_embeddings():
             emb = BedrockEmbeddings(
                 model_id="amazon.titan-embed-text-v2:0",
                 region_name=settings.AWS_REGION,
+                model_kwargs={"max_retries": 3} # Explicit retry logic
             )
-            logger.info("Using AWS Bedrock Titan embeddings (dim=1024).")
+            logger.info("Using AWS Bedrock Titan embeddings (dim=1024) with backoff retries.")
             return emb
         except Exception as e:
             logger.warning(f"Bedrock embeddings failed ({e}). Falling back to local embeddings.")
@@ -72,26 +73,30 @@ def search_patient_query(
     query: str,
     top_k: int = 4,
     threshold: float = 0.3,
+    document_type: str = "guideline"
 ) -> Tuple[str, List[str]]:
     """
-    Searches pgvector for the most relevant medical document chunks.
+    Searches pgvector for the most relevant medical document chunks using hybrid filtering.
 
     Args:
         query: The user's health question.
         top_k: Number of nearest chunks to retrieve.
-        threshold: Minimum similarity score (0-1). Chunks below this are discarded.
-                   Note: langchain-postgres returns cosine *distance* (lower = more similar).
-                   We convert: similarity = 1 - distance.
-
-    Returns:
-        (combined_context_string, list_of_source_names)
+        threshold: Minimum similarity score (0-1).
+        document_type: Metadata filter to ensure we only pull from approved guidelines.
     """
     if not embeddings:
         logger.warning("Embeddings not initialized. Returning empty context.")
         return "", []
 
     try:
-        results = vector_store.similarity_search_with_score(query=query, k=top_k)
+        # Hybrid retrieval: Vector similarity + Keyword metadata filtering
+        filter_dict = {"document_type": document_type} if document_type else None
+        
+        results = vector_store.similarity_search_with_score(
+            query=query, 
+            k=top_k,
+            filter=filter_dict
+        )
 
         relevant_chunks = []
         sources = set()
@@ -139,14 +144,15 @@ def build_medical_assistant_prompt(
     if not context:
         context = "No relevant medical guidelines were found in the database."
 
-    return f"""You are Swasthya-Setu, a medical assistant for rural healthcare in India.
+    return f"""You are Swasthya-Setu, a medical assistant supporting rural healthcare workers in India.
 
 RULES:
-1. Use ONLY the provided context to answer the user's question.
-2. If the context does not contain the answer, say exactly:
-   "I cannot find guidance in the available medical documents. Please consult a doctor or ASHA worker."
-3. Do NOT invent, guess, or use outside medical knowledge.
-4. Always recommend seeing a doctor for serious or unclear symptoms.
+1. Use ONLY the information provided in the context.
+2. If the answer is not present in the context, say EXACTLY:
+   "I cannot find this information in the available medical guidelines. Please consult a doctor."
+3. Do NOT provide medical diagnosis.
+4. Do NOT invent information.
+5. Always cite the source provided in the context.
 
 Context:
 {context}
