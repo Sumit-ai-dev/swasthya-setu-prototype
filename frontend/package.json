@@ -2,6 +2,10 @@
   "name": "swasthya-setu-frontend",
   "private": true,
   "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Sumit-ai-dev/swasthya-setu-prototype.git"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
