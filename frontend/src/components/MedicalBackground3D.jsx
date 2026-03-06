@@ -5,9 +5,9 @@ import * as THREE from 'three';
 // DNA Helix Component
 function DNAHelix({ position }) {
     const groupRef = useRef();
-    
+
     useFrame((state) => {
-        if (groupRef.current) {
+        if (groupRef.current && position) {
             groupRef.current.rotation.y += 0.005;
             groupRef.current.position.y = position[1] + Math.sin(state.clock.elapsedTime * 0.5) * 0.3;
         }
@@ -30,8 +30,8 @@ function DNAHelix({ position }) {
             {helixPoints.map((point, i) => (
                 <mesh key={i} position={[point.x, point.y, point.z]}>
                     <sphereGeometry args={[0.05, 8, 8]} />
-                    <meshStandardMaterial 
-                        color={i % 2 === 0 ? "#3b82f6" : "#8b5cf6"} 
+                    <meshStandardMaterial
+                        color={i % 2 === 0 ? "#3b82f6" : "#8b5cf6"}
                         emissive={i % 2 === 0 ? "#3b82f6" : "#8b5cf6"}
                         emissiveIntensity={0.3}
                     />
@@ -63,14 +63,20 @@ function MedicalParticles() {
     }, []);
 
     useFrame((state) => {
-        if (particlesRef.current) {
-            particlesRef.current.children.forEach((particle, i) => {
-                particle.position.y += particles[i].speed;
-                if (particle.position.y > 10) particle.position.y = -10;
-                
-                particle.rotation.x += 0.01;
-                particle.rotation.y += 0.01;
-            });
+        if (particlesRef.current && particles) {
+            const children = particlesRef.current.children;
+            const length = Math.min(children.length, particles.length);
+            for (let i = 0; i < length; i++) {
+                const particle = children[i];
+                const pData = particles[i];
+                if (particle && pData) {
+                    particle.position.y += pData.speed;
+                    if (particle.position.y > 10) particle.position.y = -10;
+
+                    particle.rotation.x += 0.01;
+                    particle.rotation.y += 0.01;
+                }
+            }
         }
     });
 
@@ -79,7 +85,7 @@ function MedicalParticles() {
             {particles.map((particle, i) => (
                 <mesh key={i} position={particle.position}>
                     <octahedronGeometry args={[particle.size, 0]} />
-                    <meshStandardMaterial 
+                    <meshStandardMaterial
                         color="#06b6d4"
                         transparent
                         opacity={0.6}
@@ -95,7 +101,7 @@ function MedicalParticles() {
 // Heartbeat Pulse Ring
 function PulseRing({ position }) {
     const ringRef = useRef();
-    
+
     useFrame((state) => {
         if (ringRef.current) {
             const scale = 1 + Math.sin(state.clock.elapsedTime * 2) * 0.2;
@@ -108,7 +114,7 @@ function PulseRing({ position }) {
     return (
         <mesh ref={ringRef} position={position}>
             <torusGeometry args={[1, 0.1, 16, 32]} />
-            <meshStandardMaterial 
+            <meshStandardMaterial
                 color="#ec4899"
                 emissive="#ec4899"
                 emissiveIntensity={0.5}
@@ -122,7 +128,7 @@ function PulseRing({ position }) {
 // Medical Cross Symbol
 function MedicalCross({ position }) {
     const crossRef = useRef();
-    
+
     useFrame((state) => {
         if (crossRef.current) {
             crossRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.5) * 0.3;
@@ -135,7 +141,7 @@ function MedicalCross({ position }) {
             {/* Vertical bar */}
             <mesh position={[0, 0, 0]}>
                 <boxGeometry args={[0.2, 1, 0.2]} />
-                <meshStandardMaterial 
+                <meshStandardMaterial
                     color="#10b981"
                     emissive="#10b981"
                     emissiveIntensity={0.3}
@@ -144,7 +150,7 @@ function MedicalCross({ position }) {
             {/* Horizontal bar */}
             <mesh position={[0, 0.2, 0]}>
                 <boxGeometry args={[0.8, 0.2, 0.2]} />
-                <meshStandardMaterial 
+                <meshStandardMaterial
                     color="#10b981"
                     emissive="#10b981"
                     emissiveIntensity={0.3}
@@ -167,18 +173,11 @@ export default function MedicalBackground3D() {
                 <pointLight position={[-10, -10, -10]} intensity={0.8} color="#8b5cf6" />
                 <spotLight position={[0, 10, 0]} intensity={0.8} color="#06b6d4" />
 
-                {/* DNA Helixes */}
                 <DNAHelix position={[-4, 0, -3]} />
                 <DNAHelix position={[4, -2, -4]} />
-                
-                {/* Medical Particles */}
                 <MedicalParticles />
-                
-                {/* Pulse Rings */}
                 <PulseRing position={[-3, 2, -2]} />
                 <PulseRing position={[3, -1, -3]} />
-                
-                {/* Medical Crosses */}
                 <MedicalCross position={[0, 3, -5]} />
                 <MedicalCross position={[-5, -2, -4]} />
                 <MedicalCross position={[5, 1, -5]} />

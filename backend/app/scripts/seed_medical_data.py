@@ -97,6 +97,18 @@ SAMPLE_MEDICAL_TEXTS = [
             "Once fever subsides, gradually return to a normal diet with extra portions to recover lost nutrition."
         ),
     },
+    {
+        "source": "WHO & NHM - Hypertension Diet Guidelines 2024",
+        "content": (
+            "Hypertension (High Blood Pressure) management requires significant dietary changes. "
+            "The primary recommendation is reducing salt (sodium) intake to less than 5g per day. "
+            "Follow the DASH diet: increase intake of fruits, vegetables, and whole grains. "
+            "Increase potassium-rich foods (bananas, potatoes, spinach) to help lower blood pressure. "
+            "Limit saturated fats and eliminate trans fats found in processed and fried foods. "
+            "Maintain a healthy weight and limit alcohol consumption to 1-2 drinks per day. "
+            "For severe hypertension, consult a doctor for medication alongside dietary changes."
+        ),
+    },
 ]
 
 
