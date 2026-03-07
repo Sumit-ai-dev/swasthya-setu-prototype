@@ -15,14 +15,16 @@ def _build_triage_prompt(symptoms: list, language: str) -> str:
     symptom_str = ", ".join(symptoms)
     lang_instruction = "Respond in Hindi." if language == "hi" else "Respond in English."
 
-    return f"""You are a clinical triage assistant for rural India healthcare workers.
+    return f"""You are a professional clinical triage assistant for rural India healthcare workers, following WHO ETAT (Emergency Triage Assessment and Treatment) and IMAI standards.
 
 Patient symptoms: {symptom_str}
 
-Classify this case as one of:
-- GREEN: Safe for home care
-- YELLOW: Needs pharmacy or basic clinic visit
-- RED: Requires immediate specialist or hospital attention
+CRITICAL TRIAGE RULES:
+1. RED (EMERGENCY): Look for Airway, Breathing, Circulation, or Disability emergencies (e.g., chest pain, severe bleeding, difficulty breathing, unconsciousness).
+2. YELLOW (PRIORITY): Look for serious but stable conditions, including chronic risks like cancer indicators (unexplained weight loss, new lumps, persistent fever > 2 weeks, severe persistent pain).
+3. GREEN (NON-URGENT): Mild, self-limiting symptoms only. 
+
+WARNING: Any symptoms suggestive of chronic serious illness (like Cancer, HIV, or Tuberculosis) MUST be classified as YELLOW or RED. Never classify "Cancer" or "Lump" as GREEN.
 
 {lang_instruction}
 
@@ -30,7 +32,7 @@ Return a JSON object exactly like this:
 {{
   "triage_level": "GREEN" | "YELLOW" | "RED",
   "confidence": 0.0 to 1.0,
-  "advice": "clear actionable advice in 2-3 sentences"
+  "advice": "clear actionable advice in 2-3 sentences, specifying if an emergency or priority sign was detected"
 }}
 
 Return ONLY the JSON. No explanation outside the JSON."""
@@ -91,31 +93,42 @@ def symptom_triage(payload: TriageRequest, db: Session = Depends(get_db)):
         )
 
     except Exception:
-        # --- Local dev fallback (rule-based) ---
+        # --- Local dev fallback (WHO-based rules) ---
         symptoms_lower = [s.lower() for s in payload.symptoms]
-        red_flags = ["chest pain", "difficulty breathing", "unconscious", "seizure", "stroke"]
-        yellow_flags = ["fever", "vomiting", "diarrhea", "headache", "cough"]
+        
+        # WHO Emergency Signs (RED)
+        emergency_signs = [
+            "chest pain", "difficulty breathing", "unconscious", "seizure", 
+            "stroke", "severe bleeding", "poisoning", "trauma", "choking"
+        ]
+        
+        # WHO Priority Signs (YELLOW) - Including Oncology/Chronic indicators
+        priority_signs = [
+            "cancer", "lump", "mass", "weight loss", "persistent fever", 
+            "severe pain", "diabetes", "heart disease", "vision loss", 
+            "persistent cough", "tb", "tuberculosis", "hiv", "jaundice"
+        ]
 
-        if any(f in s for f in red_flags for s in symptoms_lower):
+        if any(f in s for f in emergency_signs for s in symptoms_lower):
             level, confidence, advice = (
-                "RED", 0.90,
-                "Serious symptoms detected. Go to the nearest hospital immediately. Do not wait."
+                "RED", 0.95,
+                "EMERGENCY: Serious symptoms detected. Go to the nearest hospital immediately. Do not wait."
                 if payload.language == "en" else
-                "गंभीर लक्षण। तुरंत निकटतम अस्पताल जाएं।"
+                "आपातकालीन: गंभीर लक्षण। तुरंत निकटतम अस्पताल जाएं।"
             )
-        elif any(f in s for f in yellow_flags for s in symptoms_lower):
+        elif any(f in s for f in priority_signs for s in symptoms_lower):
             level, confidence, advice = (
-                "YELLOW", 0.78,
-                "Moderate symptoms. Visit a nearby pharmacy or clinic for assessment and medicine."
+                "YELLOW", 0.88,
+                "PRIORITY: Potential serious condition detected (e.g., chronic illness or oncology risk). Visit a clinic for clinical assessment soon."
                 if payload.language == "en" else
-                "मध्यम लक्षण। नज़दीकी फार्मेसी या क्लिनिक जाएं।"
+                "प्राथमिकता: संभावित गंभीर स्थिति। शीघ्र जांच के लिए क्लिनिक जाएं।"
             )
         else:
             level, confidence, advice = (
                 "GREEN", 0.85,
-                "Symptoms appear mild. Rest, stay hydrated, and monitor. Consult a doctor if they worsen."
+                "Non-urgent symptoms. Rest, stay hydrated, and monitor. Consult a doctor if they weaken or persist."
                 if payload.language == "en" else
-                "लक्षण हल्के हैं। आराम करें और पानी पिएं। यदि बदतर हों तो डॉक्टर से मिलें।"
+                "लक्षण हल्के हैं। आराम करें। यदि बदतर हों तो डॉक्टर से मिलें।"
             )
 
         consultation_id = str(uuid.uuid4())
