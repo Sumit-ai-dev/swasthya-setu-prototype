@@ -10,10 +10,13 @@ import json
 import logging
 
 import boto3
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
 from app.schemas.chatbot import ChatMessage, ChatResponse
 from app.core.config import settings
+from app.db.database import get_db
+from app.db.models import Consultation
 from app.services.rag_service import search_patient_query, build_medical_assistant_prompt
 
 logger = logging.getLogger(__name__)
@@ -25,7 +28,7 @@ _sessions: dict = {}
 
 
 @router.post("/chat", response_model=ChatResponse)
-def health_chatbot(payload: ChatMessage):
+def health_chatbot(payload: ChatMessage, db: Session = Depends(get_db)):
     """
     RAG-based health chatbot endpoint.
 
@@ -91,6 +94,17 @@ def health_chatbot(payload: ChatMessage):
     # Save to session history
     history.append({"user": payload.message, "bot": response_text})
     _sessions[session_id] = history
+
+    # Log to Database
+    db_consultation = Consultation(
+        session_id=session_id,
+        type="CHAT",
+        query=payload.message,
+        response=response_text,
+        language=payload.language
+    )
+    db.add(db_consultation)
+    db.commit()
 
     return ChatResponse(
         response=response_text,

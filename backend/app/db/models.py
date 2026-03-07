@@ -42,3 +42,20 @@ class MedicalDocumentChunk(Base):
 
     def __repr__(self):
         return f"<MedicalDocumentChunk id={self.id} source={self.source}>"
+
+
+class Consultation(Base):
+    """Stores every triage and chatbot interaction for analytics."""
+    __tablename__ = "consultations"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    session_id = Column(String, index=True)
+    type = Column(String) # "TRIAGE" or "CHAT"
+    triage_level = Column(String, nullable=True) # GREEN, YELLOW, RED (only for triage)
+    query = Column(Text)
+    response = Column(Text)
+    language = Column(String, default="en")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<Consultation id={self.id} type={self.type} level={self.triage_level}>"

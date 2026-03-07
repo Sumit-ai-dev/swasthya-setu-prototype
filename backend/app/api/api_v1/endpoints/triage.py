@@ -1,9 +1,12 @@
 import uuid
 import json
 import boto3
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
 from app.schemas.triage import TriageRequest, TriageResponse
 from app.core.config import settings
+from app.db.database import get_db
+from app.db.models import Consultation
 
 router = APIRouter()
 
@@ -34,7 +37,7 @@ Return ONLY the JSON. No explanation outside the JSON."""
 
 
 @router.post("/triage", response_model=TriageResponse)
-def symptom_triage(payload: TriageRequest):
+def symptom_triage(payload: TriageRequest, db: Session = Depends(get_db)):
     """
     Accepts symptoms and returns a triage classification (GREEN/YELLOW/RED)
     using Amazon Bedrock (Claude 3 Haiku).
@@ -64,12 +67,27 @@ def symptom_triage(payload: TriageRequest):
         text = result["content"][0]["text"]
         parsed = json.loads(text)
 
+        consultation_id = str(uuid.uuid4())
+        
+        # Log to Database
+        db_consultation = Consultation(
+            id=uuid.UUID(consultation_id),
+            session_id=consultation_id, # Link session to ID for now
+            type="TRIAGE",
+            triage_level=parsed["triage_level"],
+            query=", ".join(payload.symptoms),
+            response=parsed["advice"],
+            language=payload.language
+        )
+        db.add(db_consultation)
+        db.commit()
+
         return TriageResponse(
             triage_level=parsed["triage_level"],
             confidence=parsed["confidence"],
             advice=parsed["advice"],
             language=payload.language,
-            consultation_id=str(uuid.uuid4()),
+            consultation_id=consultation_id,
         )
 
     except Exception:
@@ -100,10 +118,25 @@ def symptom_triage(payload: TriageRequest):
                 "लक्षण हल्के हैं। आराम करें और पानी पिएं। यदि बदतर हों तो डॉक्टर से मिलें।"
             )
 
+        consultation_id = str(uuid.uuid4())
+        
+        # Log to Database
+        db_consultation = Consultation(
+            id=uuid.UUID(consultation_id),
+            session_id=consultation_id,
+            type="TRIAGE",
+            triage_level=level,
+            query=", ".join(payload.symptoms),
+            response=advice,
+            language=payload.language
+        )
+        db.add(db_consultation)
+        db.commit()
+
         return TriageResponse(
             triage_level=level,
             confidence=confidence,
             advice=advice,
             language=payload.language,
-            consultation_id=str(uuid.uuid4()),
+            consultation_id=consultation_id,
         )
