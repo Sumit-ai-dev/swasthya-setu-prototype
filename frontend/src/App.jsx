@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Triage from './components/Triage';
 import Chatbot from './components/Chatbot';
@@ -9,12 +9,23 @@ import { ActivitySquare, MessageSquare, BarChart3, Sparkles } from 'lucide-react
 function App() {
     const [activeTab, setActiveTab] = useState('home');
 
-    // Scroll to top whenever activeTab changes
-    useEffect(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, [activeTab]);
+    // Scroll to top when tab changes
+    const handleTabChange = (tab) => {
+        setActiveTab(tab);
+        // Force scroll to top immediately
+        setTimeout(() => {
+            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+        }, 0);
+    };
 
-    console.log('App rendering, activeTab:', activeTab);
+    // Also scroll on activeTab change
+    useEffect(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+    }, [activeTab]);
 
     return (
         <div className="min-h-screen flex flex-col bg-slate-900">
@@ -29,7 +40,7 @@ function App() {
                     <div className="flex justify-between items-center h-20">
                         <motion.div
                             className="flex items-center gap-3 cursor-pointer"
-                            onClick={() => setActiveTab('home')}
+                            onClick={() => handleTabChange('home')}
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                         >
@@ -56,7 +67,7 @@ function App() {
                             ].map((tab) => (
                                 <motion.button
                                     key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
+                                    onClick={() => handleTabChange(tab.id)}
                                     className={`relative px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 transition-all ${
                                         activeTab === tab.id
                                             ? 'text-white'
@@ -92,7 +103,7 @@ function App() {
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.5 }}
                         >
-                            <Hero onGetStarted={() => setActiveTab('triage')} />
+                            <Hero onGetStarted={() => handleTabChange('triage')} />
                             
                             {/* Quick Access Section */}
                             <div className="relative py-20 px-4">
@@ -142,11 +153,10 @@ function App() {
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ delay: 0.4 + idx * 0.1 }}
                                                 whileHover={{ y: -12, scale: 1.02 }}
-                                                onClick={() => setActiveTab(card.id)}
+                                                onClick={() => handleTabChange(card.id)}
                                                 className="group relative glass p-8 rounded-3xl cursor-pointer border border-white/10 hover:border-white/20 transition-all duration-300"
                                             >
-                                                <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 rounded-3xl transition-opacity duration-300" 
-                                                     style={{ backgroundImage: `linear-gradient(to bottom right, var(--tw-gradient-stops))` }} />
+                                                <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 rounded-3xl transition-opacity duration-300" />
                                                 
                                                 <div className={`w-16 h-16 bg-gradient-to-br ${card.gradient} rounded-2xl flex items-center justify-center mb-6 shadow-2xl group-hover:scale-110 transition-transform duration-300`}>
                                                     <card.icon className="w-8 h-8 text-white" />
@@ -161,11 +171,7 @@ function App() {
                                                 
                                                 <div className="mt-6 flex items-center text-blue-400 font-semibold group-hover:gap-3 gap-2 transition-all">
                                                     <span>Launch</span>
-                                                    <motion.span
-                                                        className="group-hover:translate-x-1 transition-transform"
-                                                    >
-                                                        →
-                                                    </motion.span>
+                                                    <span className="group-hover:translate-x-1 transition-transform">→</span>
                                                 </div>
                                             </motion.div>
                                         ))}
@@ -195,7 +201,7 @@ function App() {
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -20 }}
                             transition={{ duration: 0.4 }}
-                            className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-12 px-4"
+                            className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4 py-12"
                         >
                             <Chatbot />
                         </motion.div>
@@ -208,7 +214,7 @@ function App() {
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -20 }}
                             transition={{ duration: 0.4 }}
-                            className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-12 px-4"
+                            className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4 py-12"
                         >
                             <Analytics />
                         </motion.div>

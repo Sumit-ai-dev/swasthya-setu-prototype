@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { getAnalyticsSummary } from '../api';
 import { Activity, Users, Clock, AlertTriangle, TrendingUp } from 'lucide-react';
@@ -19,12 +19,18 @@ export default function Analytics() {
 
     if (loading || !stats) {
         return (
-            <div className="flex justify-center items-center p-20">
+            <div className="max-w-6xl mx-auto">
                 <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                    className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full"
-                />
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="glass p-20 rounded-3xl shadow-2xl border border-white/10 flex justify-center items-center"
+                >
+                    <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                        className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full"
+                    />
+                </motion.div>
             </div>
         );
     }
@@ -34,10 +40,10 @@ export default function Analytics() {
     return (
         <div className="max-w-6xl mx-auto space-y-8">
             <motion.div
-                initial={{ opacity: 0, y: -20 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
             >
-                <h2 className="text-5xl font-bold text-white mb-2">
+                <h2 className="text-4xl font-bold text-white mb-2">
                     Platform Analytics
                 </h2>
                 <p className="text-gray-400 text-lg">Real-time insights and performance metrics</p>
@@ -55,7 +61,7 @@ export default function Analytics() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: stat.delay }}
                         whileHover={{ scale: 1.05, y: -5 }}
-                        className="glass p-6 rounded-3xl shadow-xl card-hover border border-white/10"
+                        className="glass p-6 rounded-3xl shadow-xl border border-white/10"
                     >
                         <div className="flex items-center gap-4">
                             <motion.div
