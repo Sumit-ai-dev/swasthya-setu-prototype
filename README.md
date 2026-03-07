@@ -48,91 +48,104 @@ The architecture is built for AWS deployment (Lambda, API Gateway, S3, RDS) to s
 
 ---
 
-## 🚀 Quick Start for the Team
+## 🚀 Installation & Setup Guide
 
-### 1. Start the Backend API
+### 1. Prerequisites
+- **Docker Desktop**: Required for the vector database.
+- **Python 3.11+**: Backend takes advantage of modern typing.
+- **Node.js 18+**: For the React frontend.
 
-You will need **Docker Desktop** running to spin up the local PostgreSQL + `pgvector` database.
-The backend defaults to local HuggingFace embeddings (`all-MiniLM-L6-v2`), meaning **you can test the RAG API locally without AWS credentials**.
+---
+
+### 2. Backend Setup (`/backend`)
+
+The backend uses **FastAPI** and **PostgreSQL (pgvector)**.
 
 ```bash
 cd backend
 
-# Start the local pgvector database
+# A. Start the Vector Database
 docker compose up -d
 
-# Setup Python environment
-python -m venv venv
-source venv/bin/activate  # Or `venv\Scripts\activate` on Windows
+# B. Setup Python Environment
+python3 -m venv venv
+source venv/bin/activate
 
-# Install dependencies
+# C. Install Dependencies
 pip install -r requirements.txt
 
-# Configure environment variables
+# D. Environment Configuration
 cp .env.example .env
+# Edit .env and set:
+# DATABASE_URL=postgresql://user:password@localhost:5432/health_db
+# AWS_REGION=ap-south-1 (if using Bedrock)
 
-# Run the database seeding script (Loads WHO rules into pgvector)
+# E. Initialize and Seed Database
+# This creates the pgvector extension and loads WHO/NHM guidelines
 export PYTHONPATH=.
+python app/scripts/init_db.py
 python app/scripts/seed_medical_data.py
 
-# Run the API server
-uvicorn app.main:app --reload
+# F. Run the API
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-Interactive Swagger UI docs will be available at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- **Health Check**: [http://localhost:8000/health](http://localhost:8000/health)
+- **API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-*(Note: To test the actual Bedrock AI models, add your AWS credentials into the `.env` file.)*
+---
 
-### 2. Start the Frontend
+### 3. Frontend Setup (`/frontend`)
 
 ```bash
 cd frontend
 
-# Install dependencies
+# A. Install Dependencies
 npm install
 
-# Run the development server
+# B. Environment Configuration
+# Create .env and set:
+# VITE_API_URL=http://localhost:8000/api/v1
+
+# C. Run Development Server
 npm run dev
 ```
 
-The React app will be available at [http://127.0.0.1:5173](http://127.0.0.1:5173)
+- **URL**: [http://localhost:5173](http://localhost:5173)
 
 ---
 
-## 🧪 Running Tests
+## 🏥 Clinical Standards & Safety
 
-The backend includes a comprehensive `pytest` suite ensuring the endpoints, schemas, and local fallback engines work properly.
+### **WHO ETAT / IMAI Integration**
+The triage engine is strictly calibrated against WHO clinical standards. 
 
+- **RED (Emergency)**: Immediate hospital referral for Airway, Breathing, Circulation, or Disability signs.
+- **YELLOW (Priority)**: Serious but stable conditions requiring clinical investigation.
+- **GREEN (Non-Urgent)**: Home care for mild, self-limiting symptoms.
+
+### **Specialized Oncology Guardrails**
+As per the latest prototype update, any indicators of **Cancer**, **Malignancy**, or **Chronic Lumps** are automatically upgraded to **RED PRIORITY**. This ensures high-urgency visibility for oncology risks in rural triage scenarios.
+
+---
+
+## 🧪 Verification
+Run the clinical test suite to verify triage logic:
 ```bash
 cd backend
-pytest -v
+pytest app/tests/test_clinical_triage.py -v
 ```
 
 ---
 
-## 📌 Implementation Checklist (Hackathon Scope)
+## 📌 Roadmap & Progress
 
-- [x] Initial infrastructure, directory, and git scaffolding
-- [x] `POST /api/v1/triage` - AI symptom classification API
-- [x] `POST /api/v1/chatbot` - RAG-based AI medical chatbot API
-- [x] `GET /api/v1/analytics/summary` - Usage statistics API
-- [x] Frontend React + Tailwind scaffolding
-- [x] Connect Frontend React UI to Backend APIs
-- [x] Load real-world WHO/NHM medical documents into pgvector knowledge base
-- [x] Fix 3D rendering stability and browser-hang issues (useFrame guards)
-- [x] Implement deterministic RAG deduplication and hybrid search
-- [x] Deploy Backend to AWS Lambda (Phase 3 Final)
-- [x] Deploy Frontend to Amazon S3 / CloudFront (Phase 3 Final)
+- [x] **RAG Implementation**: pgvector + local embeddings (`all-MiniLM-L6-v2`).
+- [x] **Clinical Triage**: WHO-standard logic with specialized Oncology RED-flags.
+- [x] **Premium UI**: 3D medical backgrounds with Framer Motion.
+- [x] **Analytics**: Live DB logging for consultation distribution.
+- [x] **CORS Stability**: Explicit origin handling for local development.
 
 ---
 
-## 🤝 Contribution Strategy
-
-We follow a strict Open Source PR workflow to keep the codebase clean. 
-**Please read the [CONTRIBUTING.md](./CONTRIBUTING.md) guide before pushing any code!** This guide covers:
-- Branch naming conventions (`feat/`, `fix/`)
-- Commit message guidelines
-- How to open Pull Requests (PRs)
-- The Phase 1, Phase 2, and Phase 3 Hackathon Checklists
-
-*Built for the 2026 AI For Bharat Hackathon* 🇮🇳
+*Built with ❤️ for AI For Bharat Hackathon 2026* 🇮🇳
