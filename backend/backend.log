@@ -25,3 +25,5 @@ INFO:     127.0.0.1:56894 - "POST /api/v1/triage/triage HTTP/1.1" 200 OK
 INFO:     127.0.0.1:56921 - "POST /api/v1/chatbot/chat HTTP/1.1" 200 OK
 INFO:     127.0.0.1:57015 - "GET /api/v1/analytics/summary HTTP/1.1" 200 OK
 INFO:     127.0.0.1:57015 - "GET /api/v1/analytics/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57122 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57122 - "GET /favicon.ico HTTP/1.1" 404 Not Found
