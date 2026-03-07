@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Triage from './components/Triage';
 import Chatbot from './components/Chatbot';
@@ -8,6 +8,11 @@ import { ActivitySquare, MessageSquare, BarChart3, Sparkles } from 'lucide-react
 
 function App() {
     const [activeTab, setActiveTab] = useState('home');
+
+    // Scroll to top whenever activeTab changes
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [activeTab]);
 
     console.log('App rendering, activeTab:', activeTab);
 
