@@ -121,8 +121,8 @@ pytest -v
 - [x] Load real-world WHO/NHM medical documents into pgvector knowledge base
 - [x] Fix 3D rendering stability and browser-hang issues (useFrame guards)
 - [x] Implement deterministic RAG deduplication and hybrid search
-- [ ] Deploy Backend to AWS Lambda (Phase 3 Final)
-- [ ] Deploy Frontend to Amazon S3 / CloudFront (Phase 3 Final)
+- [x] Deploy Backend to AWS Lambda (Phase 3 Final)
+- [x] Deploy Frontend to Amazon S3 / CloudFront (Phase 3 Final)
 
 ---
 
