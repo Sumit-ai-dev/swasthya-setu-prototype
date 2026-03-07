@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { sendChatMessage } from '../api';
-import { Send, Loader2, Bot, User, BookOpen, Sparkles } from 'lucide-react';
+import { Send, Bot, BookOpen, Sparkles } from 'lucide-react';
 
 export default function Chatbot() {
     const [messages, setMessages] = useState([
@@ -49,9 +49,10 @@ export default function Chatbot() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="glass rounded-3xl shadow-2xl flex flex-col h-[700px] border border-white/10"
+                className="glass p-10 rounded-3xl shadow-2xl border border-white/10"
             >
-                <div className="p-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-blue-600/10 to-indigo-600/10 rounded-t-3xl">
+                {/* Header Section */}
+                <div className="flex justify-between items-center mb-8">
                     <div className="flex items-center gap-3">
                         <motion.div
                             animate={{ rotate: [0, 360] }}
@@ -61,7 +62,7 @@ export default function Chatbot() {
                             <Sparkles className="w-6 h-6" />
                         </motion.div>
                         <div>
-                            <h2 className="text-xl font-bold text-white">
+                            <h2 className="text-3xl font-bold text-white">
                                 Medical AI Assistant
                             </h2>
                             <p className="text-sm text-gray-400">Powered by RAG Technology</p>
@@ -77,7 +78,8 @@ export default function Chatbot() {
                     </select>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-900/50">
+                {/* Messages Area */}
+                <div className="space-y-6 mb-8">
                     <AnimatePresence>
                         {messages.map((msg, idx) => (
                             <motion.div
@@ -184,27 +186,26 @@ export default function Chatbot() {
                     <div ref={endOfMessagesRef} />
                 </div>
 
-                <div className="p-6 border-t border-white/10 bg-gradient-to-r from-blue-600/5 to-indigo-600/5 rounded-b-3xl">
-                    <form onSubmit={handleSend} className="flex gap-3">
-                        <input
-                            type="text"
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            placeholder={language === 'en' ? 'Ask a medical question...' : 'चिकित्सकीय सवाल पूछें...'}
-                            className="flex-1 p-4 glass rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-white placeholder-gray-500 bg-white/5"
-                            disabled={loading}
-                        />
-                        <motion.button
-                            type="submit"
-                            disabled={!input.trim() || loading}
-                            whileHover={{ scale: !input.trim() || loading ? 1 : 1.05 }}
-                            whileTap={{ scale: !input.trim() || loading ? 1 : 0.95 }}
-                            className="p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                        >
-                            <Send className="w-6 h-6" />
-                        </motion.button>
-                    </form>
-                </div>
+                {/* Input Section */}
+                <form onSubmit={handleSend} className="flex gap-3">
+                    <input
+                        type="text"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        placeholder={language === 'en' ? 'Ask a medical question...' : 'चिकित्सकीय सवाल पूछें...'}
+                        className="flex-1 p-4 glass rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all text-white placeholder-gray-500 bg-white/5"
+                        disabled={loading}
+                    />
+                    <motion.button
+                        type="submit"
+                        disabled={!input.trim() || loading}
+                        whileHover={{ scale: !input.trim() || loading ? 1 : 1.05 }}
+                        whileTap={{ scale: !input.trim() || loading ? 1 : 0.95 }}
+                        className="p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                        <Send className="w-6 h-6" />
+                    </motion.button>
+                </form>
             </motion.div>
         </div>
     );
