@@ -13,8 +13,8 @@ def test_triage_priority_cancer():
     # We call the function (it will hit fallback if Bedrock isn't configured in test env)
     response = symptom_triage(payload, db=db)
     
-    assert response.triage_level in ["YELLOW", "RED"]
-    assert "PRIORITY" in response.advice or "EMERGENCY" in response.advice
+    assert response.triage_level == "RED"
+    assert "EMERGENCY" in response.advice
 
 def test_triage_priority_emergency():
     payload = TriageRequest(symptoms=["chest pain", "difficulty breathing"], language="en")

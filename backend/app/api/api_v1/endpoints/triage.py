@@ -21,10 +21,11 @@ Patient symptoms: {symptom_str}
 
 CRITICAL TRIAGE RULES:
 1. RED (EMERGENCY): Look for Airway, Breathing, Circulation, or Disability emergencies (e.g., chest pain, severe bleeding, difficulty breathing, unconsciousness).
-2. YELLOW (PRIORITY): Look for serious but stable conditions, including chronic risks like cancer indicators (unexplained weight loss, new lumps, persistent fever > 2 weeks, severe persistent pain).
+2. YELLOW (PRIORITY): Look for serious but stable conditions (e.g., persistent fever > 2 weeks, severe persistent pain, jaundice).
 3. GREEN (NON-URGENT): Mild, self-limiting symptoms only. 
+4. CANCER/MALIGNANCY: Any mention of "Cancer", "Tumor", or "New Lumps" MUST be RED.
 
-WARNING: Any symptoms suggestive of chronic serious illness (like Cancer, HIV, or Tuberculosis) MUST be classified as YELLOW or RED. Never classify "Cancer" or "Lump" as GREEN.
+WARNING: Any symptoms suggestive of Cancer, Tumor, or suspected Malignancy MUST be classified as RED.
 
 {lang_instruction}
 
@@ -99,12 +100,13 @@ def symptom_triage(payload: TriageRequest, db: Session = Depends(get_db)):
         # WHO Emergency Signs (RED)
         emergency_signs = [
             "chest pain", "difficulty breathing", "unconscious", "seizure", 
-            "stroke", "severe bleeding", "poisoning", "trauma", "choking"
+            "stroke", "severe bleeding", "poisoning", "trauma", "choking",
+            "cancer", "lump", "mass", "tumor"
         ]
         
         # WHO Priority Signs (YELLOW) - Including Oncology/Chronic indicators
         priority_signs = [
-            "cancer", "lump", "mass", "weight loss", "persistent fever", 
+            "weight loss", "persistent fever", 
             "severe pain", "diabetes", "heart disease", "vision loss", 
             "persistent cough", "tb", "tuberculosis", "hiv", "jaundice"
         ]

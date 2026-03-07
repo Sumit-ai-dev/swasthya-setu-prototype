@@ -1,9 +1,9 @@
 
 > swasthya-setu-frontend@1.0.0 dev
-> vite
+> vite --host 0.0.0.0 --port 5173
 
 
-  VITE v5.4.21  ready in 716 ms
+  VITE v5.4.21  ready in 305 ms
 
   ➜  Local:   http://localhost:5173/
-  ➜  Network: use --host to expose
+  ➜  Network: http://10.110.158.150:5173/
