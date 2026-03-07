@@ -1,7 +1,7 @@
 # Swasthya-Setu MVP 🏥
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
-![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)
+![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)
 ![React 18](https://img.shields.io/badge/React-18-blue.svg)
 
 > **AI for Bharat Hackathon Submission**
@@ -15,7 +15,7 @@
 Rural India faces limited access to specialists and overloaded public health infrastructure. **Swasthya-Setu** is an AI-powered health assistant designed to support frontline healthcare workers and patients by offering:
 
 1. **AI Symptom Triage**: Enter symptoms in Hindi or English and get classified into GREEN (Home Care), YELLOW (Clinic), or RED (Emergency Hospital).
-2. **Medical Chatbot with RAG**: A conversational assistant grounded in WHO and Indian Public Health guidelines for trusted medical advice.
+2. **Medical AI Assistant (RAG)**: A conversational assistant grounded in WHO and National Health Mission (NHM) guidelines for trusted medical advice on fever, nutrition, hypertension, and more.
 3. **Analytics Dashboard**: Real-time insights into system usage and regional triage distributions.
 
 ---
@@ -34,7 +34,8 @@ The architecture is built for AWS deployment (Lambda, API Gateway, S3, RDS) to s
 - **Amazon Bedrock** (Production Optional): 
   - `Claude 3 Haiku` for fast symptom triage
   - `Llama 3` for RAG-based chatbot responses
-- **HuggingFace Sentence-Transformers**: Local embeddings (`all-MiniLM-L6-v2`) for offline development without AWS keys.
+- **HuggingFace Sentence-Transformers**: Local embeddings (`all-MiniLM-L6-v2`) for production-grade retrieval without mandatory AWS keys during dev.
+- **Three.js & Framer Motion**: Advanced 3D medical backgrounds with optimized stability and safety guards for rendering performance.
 - **PostgreSQL + pgvector**: Vector database for document embedding retrieval (runs locally via Docker).
 - **AWS Lambda**: Deployable via the **Mangum** adapter.
 
@@ -110,9 +111,11 @@ pytest -v
 - [x] `GET /api/v1/analytics/summary` - Usage statistics API
 - [x] Frontend React + Tailwind scaffolding
 - [x] Connect Frontend React UI to Backend APIs
-- [x] Load WHO medical documents into pgvector knowledge base via `seed_medical_data.py`
-- [ ] Deploy Backend to AWS Lambda
-- [ ] Deploy Frontend to Amazon S3 / CloudFront
+- [x] Load real-world WHO/NHM medical documents into pgvector knowledge base
+- [x] Fix 3D rendering stability and browser-hang issues (useFrame guards)
+- [x] Implement deterministic RAG deduplication and hybrid search
+- [ ] Deploy Backend to AWS Lambda (Phase 3 Final)
+- [ ] Deploy Frontend to Amazon S3 / CloudFront (Phase 3 Final)
 
 ---
 
