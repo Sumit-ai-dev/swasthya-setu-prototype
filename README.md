@@ -18,7 +18,7 @@
 |---|---|
 | **Frontend (CloudFront)** | https://d74rck1rcmkfd.cloudfront.net |
 | **Backend API (API Gateway)** | https://5zdiwo4lfl.execute-api.ap-south-1.amazonaws.com/api/v1 |
-| **API Docs (Swagger)** | https://5zdiwo4lfl.execute-api.ap-south-1.amazonaws.com/api/v1/docs |
+| **API Docs (Swagger)** | https://5zdiwo4lfl.execute-api.ap-south-1.amazonaws.com/docs |
 
 ---
 
