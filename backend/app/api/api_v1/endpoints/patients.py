@@ -1,6 +1,6 @@
 from typing import List
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.db.models import Patient as PatientModel, Consultation as ConsultationModel
@@ -33,6 +33,13 @@ def get_patient_detail(patient_id: UUID, db: Session = Depends(get_db)):
     patient = db.query(PatientModel).filter(PatientModel.id == patient_id).first()
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
-    
-    # history is auto-populated via relationship
     return patient
+
+@router.delete("/{patient_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_patient(patient_id: UUID, db: Session = Depends(get_db)):
+    """Delete a patient and all their consultation history."""
+    patient = db.query(PatientModel).filter(PatientModel.id == patient_id).first()
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    db.delete(patient)
+    db.commit()

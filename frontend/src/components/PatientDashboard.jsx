@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UserPlus, Search, User, Clock, ChevronRight, History, HeartPulse, MessageCircle, AlertCircle } from 'lucide-react';
+import { UserPlus, Search, User, Clock, ChevronRight, History, HeartPulse, MessageCircle, AlertCircle, Trash2 } from 'lucide-react';
 import axios from 'axios';
 
 const API_BASE_URL = 'https://5zdiwo4lfl.execute-api.ap-south-1.amazonaws.com/api/v1';
@@ -56,6 +56,17 @@ export default function PatientDashboard({ onSelectPatient }) {
         }
     };
 
+    const deletePatient = async (e, patientId, patientName) => {
+        e.stopPropagation();
+        if (!window.confirm(`Delete patient "${patientName}"? This will also delete all their consultation history.`)) return;
+        try {
+            await axios.delete(`${API_BASE_URL}/patients/${patientId}`);
+            setPatients(prev => prev.filter(p => p.id !== patientId));
+        } catch (err) {
+            console.error("Error deleting patient:", err);
+        }
+    };
+
     const filteredPatients = patients.filter(p =>
         p.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -107,16 +118,25 @@ export default function PatientDashboard({ onSelectPatient }) {
                                 <div className="p-3 bg-blue-500/10 rounded-xl">
                                     <User className="w-6 h-6 text-blue-400" />
                                 </div>
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        viewHistory(patient.id);
-                                    }}
-                                    className="p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white transition-colors"
-                                    title="View History"
-                                >
-                                    <History className="w-5 h-5" />
-                                </button>
+                                <div className="flex gap-1">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            viewHistory(patient.id);
+                                        }}
+                                        className="p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white transition-colors"
+                                        title="View History"
+                                    >
+                                        <History className="w-5 h-5" />
+                                    </button>
+                                    <button
+                                        onClick={(e) => deletePatient(e, patient.id, patient.name)}
+                                        className="p-2 hover:bg-red-500/10 rounded-lg text-gray-400 hover:text-red-400 transition-colors"
+                                        title="Delete Patient"
+                                    >
+                                        <Trash2 className="w-5 h-5" />
+                                    </button>
+                                </div>
                             </div>
 
                             <h3 className="text-xl font-bold text-white mb-1 group-hover:text-blue-400 transition-colors">
