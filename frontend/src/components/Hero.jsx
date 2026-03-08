@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Activity, Shield, Zap, ArrowRight, CheckCircle2, Brain, Database } from 'lucide-react';
+import { Activity, Shield, ArrowRight, CheckCircle2, Brain } from 'lucide-react';
 
 export default function Hero({ onGetStarted }) {
     return (
@@ -37,7 +37,7 @@ export default function Hero({ onGetStarted }) {
                             className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-xl rounded-full border border-white/10 mx-auto"
                         >
                             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                            <span className="text-sm font-medium text-gray-300">Powered by OpenAI & PGVector</span>
+                            <span className="text-sm font-medium text-gray-300">AI for Bharat Hackathon 2026 🇮🇳</span>
                         </motion.div>
 
                         <motion.div
@@ -87,13 +87,13 @@ export default function Hero({ onGetStarted }) {
                             className="grid grid-cols-3 gap-8 pt-8 border-t border-white/10 max-w-2xl mx-auto"
                         >
                             {[
-                                { icon: Brain, label: 'AI-Powered', value: 'OpenRouter' },
-                                { icon: Database, label: 'Vector DB', value: 'PGVector' },
-                                { icon: Zap, label: 'Response', value: '<2s' }
+                                { icon: Activity, label: 'Triage Levels', value: 'RED·YLW·GRN' },
+                                { icon: Brain, label: 'Languages', value: 'Hindi & EN' },
+                                { icon: Shield, label: 'Guidelines', value: 'WHO / NHM' }
                             ].map((stat, idx) => (
                                 <div key={idx} className="space-y-2">
                                     <stat.icon className="w-6 h-6 text-blue-400 mx-auto" />
-                                    <p className="text-2xl font-bold">{stat.value}</p>
+                                    <p className="text-xl font-bold">{stat.value}</p>
                                     <p className="text-sm text-gray-400">{stat.label}</p>
                                 </div>
                             ))}
