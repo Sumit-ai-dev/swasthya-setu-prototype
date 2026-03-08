@@ -59,6 +59,11 @@ class Patient(Base):
     # Relationships
     consultations = relationship("Consultation", back_populates="patient", cascade="all, delete-orphan")
 
+    @property
+    def history(self):
+        """Alias for consultations — used by PatientDetail schema."""
+        return sorted(self.consultations, key=lambda c: c.created_at, reverse=True)
+
     def __repr__(self):
         return f"<Patient id={self.id} name={self.name}>"
 
