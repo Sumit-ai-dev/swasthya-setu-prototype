@@ -48,70 +48,27 @@ The architecture is built for AWS deployment (Lambda, API Gateway, S3, RDS) to s
 
 ---
 
-## 🚀 Installation & Setup Guide
+## 🚀 Quick Start (Docker Orchestration)
 
-### 1. Prerequisites
-- **Docker Desktop**: Required for the vector database.
-- **Python 3.11+**: Backend takes advantage of modern typing.
-- **Node.js 18+**: For the React frontend.
+Launch the entire stack (Database + Backend + Frontend) with a single command:
+
+```bash
+docker compose up --build
+```
+
+- **Frontend UI**: [http://localhost:5173](http://localhost:5173)
+- **Backend API**: [http://localhost:8000](http://localhost:8000)
+- **API Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ---
 
-### 2. Backend Setup (`/backend`)
+## ☁️ Production AWS Deployment
 
-The backend uses **FastAPI** and **PostgreSQL (pgvector)**.
+For a full cloud deployment in the `ap-south-1` (Mumbai) region using Amazon Bedrock, RDS, and Lambda, follow our:
 
-```bash
-cd backend
-
-# A. Start the Vector Database
-docker compose up -d
-
-# B. Setup Python Environment
-python3 -m venv venv
-source venv/bin/activate
-
-# C. Install Dependencies
-pip install -r requirements.txt
-
-# D. Environment Configuration
-cp .env.example .env
-# Edit .env and set:
-# DATABASE_URL=postgresql://user:password@localhost:5432/health_db
-# AWS_REGION=ap-south-1 (if using Bedrock)
-
-# E. Initialize and Seed Database
-# This creates the pgvector extension and loads WHO/NHM guidelines
-export PYTHONPATH=.
-python app/scripts/init_db.py
-python app/scripts/seed_medical_data.py
-
-# F. Run the API
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-- **Health Check**: [http://localhost:8000/health](http://localhost:8000/health)
-- **API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
+👉 **[Production AWS Deployment Guide](README_AWS.md)**
 
 ---
-
-### 3. Frontend Setup (`/frontend`)
-
-```bash
-cd frontend
-
-# A. Install Dependencies
-npm install
-
-# B. Environment Configuration
-# Create .env and set:
-# VITE_API_URL=http://localhost:8000/api/v1
-
-# C. Run Development Server
-npm run dev
-```
-
-- **URL**: [http://localhost:5173](http://localhost:5173)
 
 ---
 

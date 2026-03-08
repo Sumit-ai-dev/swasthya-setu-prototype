@@ -1,55 +1,92 @@
-# AWS Deployment Guide: Swasthya-Setu 🚀
+# Swasthya Setu: Production AWS Deployment Guide
 
-This document provides instructions for deploying the Swasthya-Setu prototype to AWS for the AI for Bharat Hackathon.
+This guide follows the official team workflow for deploying Swasthya Setu to AWS in the `ap-south-1` (Mumbai) region.
 
-## 🏗️ Architecture
+## Prerequisites
+- AWS CLI installed and configured
+- Docker installed
+- Amazon Bedrock model access (Claude 3 Haiku, Llama 3 8B, Titan Embed v2)
 
-- **Frontend**: React (Vite) → AWS S3 (Bucket) → AWS CloudFront (CDN)
-- **Backend**: FastAPI (Python 3.13) → AWS Lambda (via Mangum) → Amazon API Gateway
-- **Database**: PostgreSQL with `pgvector` → Amazon RDS (Postgres 16) → RDS Proxy (for Lambda connection pooling)
-- **AI/LLM**: Amazon Bedrock (Claude 3 Haiku / Llama 3)
+## 1. AWS CLI Configuration
+```bash
+aws configure
+# Enter Access Key ID, Secret Access Key
+# Region: ap-south-1
+# Format: json
+```
+Verify: `aws sts get-caller-identity`
 
----
+## 2. Infrastructure Setup (IAM & RDS)
 
-## 🛠️ Step-by-Step Deployment
+### IAM Role for Lambda
+```bash
+# Swasthya Setu Lambda Execution Role
+aws iam create-role \
+  --role-name swasthya-setu-lambda-role \
+  --assume-role-policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [{
+      "Effect": "Allow",
+      "Principal": { "Service": "lambda.amazonaws.com" },
+      "Action": "sts:AssumeRole"
+    }]
+  }'
 
-### 1. Database Setup (RDS)
-1.  Create an **Amazon RDS for PostgreSQL** (v16+) instance.
-2.  Enable the **`pgvector`** extension:
-    ```sql
-    CREATE EXTENSION IF NOT EXISTS vector;
-    ```
-3.  Set up an **RDS Proxy** to manage connection spikes from Lambda.
+# Attach Policies
+aws iam attach-role-policy --role-name swasthya-setu-lambda-role --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+aws iam attach-role-policy --role-name swasthya-setu-lambda-role --policy-arn arn:aws:iam::aws:policy/AmazonRDSFullAccess
+aws iam put-role-policy --role-name swasthya-setu-lambda-role --policy-name BedrockAccess --policy-document file://aws/iam_policy_bedrock_least_privilege.json
+```
 
-### 2. Backend Deployment (AWS Lambda)
-1.  **Package the Backend**:
-    - Zip the `backend` directory including `requirements.txt`.
-    - Or build a Docker image using the `Dockerfile` (recommended for Large Language Model dependencies).
-2.  **Create Lambda Function**:
-    - Set Runtime to `Python 3.13` (if using ZIP) or `Image` (if using Docker).
-    - Set the Handler to `app.main.handler`.
-3.  **Environment Variables**:
-    - `POSTGRES_SERVER`, `POSTGRES_DB`, etc. (Point to RDS Proxy endpoint).
-    - `AWS_REGION`.
-    - `EMBEDDING_PROVIDER=bedrock` (for production).
-4.  **Attach IAM Policy**:
-    - Use the provided `aws/iam_policy_bedrock_least_privilege.json` to allow Bedrock access.
+### RDS PostgreSQL Instance
+```bash
+# Create RDS Instance
+aws rds create-db-instance \
+  --db-instance-identifier swasthya-setu-db \
+  --db-instance-class db.t3.micro \
+  --engine postgres \
+  --engine-version 16 \
+  --master-username postgres \
+  --master-user-password SwasthyaSetu2026! \
+  --db-name swasthya_setu \
+  --allocated-storage 20 \
+  --publicly-accessible \
+  --region ap-south-1
+```
 
-### 3. Frontend Deployment (S3 + CloudFront)
-1.  **Build the App**:
-    ```bash
-    cd frontend
-    npm run build
-    ```
-2.  **Upload to S3**:
-    - Create an S3 bucket and upload the contents of `dist/`.
-    - Set the bucket to "Static Website Hosting" (or use CloudFront).
-3.  **CloudFront Setup**:
-    - Point CloudFront to your S3 bucket.
-    - Set up an SSL certificate (ACM) for HTTPS.
+## 3. Backend Deployment (Lambda)
 
----
+### Environment Setup
+Update `backend/.env` with your RDS endpoint and model IDs.
 
-## 📌 Post-Deployment Checks
-- Run `python app/scripts/seed_medical_data.py` (updated to point to production RDS) to index guidelines.
-- Verify the **Analytics Dashboard** displays "Live Data" from RDS.
+### Seed Database
+```bash
+cd backend
+export DATABASE_URL="postgresql://postgres:SwasthyaSetu2026!@<RDS_ENDPOINT>:5432/swasthya_setu"
+python app/scripts/init_db.py
+python app/scripts/seed_medical_data.py
+```
+
+### Deploy to ECR/Lambda
+```bash
+bash scripts/deploy.sh
+```
+
+## 4. Frontend Deployment (CloudFront)
+```bash
+# Update Frontend API URL
+echo "VITE_API_URL=<LAMBDA_URL>/api/v1" > frontend/.env
+
+# Build and Deploy to S3
+cd frontend
+bash scripts/deploy.sh
+```
+
+## Final Deployment Checklist
+- [ ] AWS CLI configured
+- [ ] Bedrock models enabled
+- [ ] IAM Role created
+- [ ] RDS instance ready
+- [ ] Database seeded
+- [ ] Backend live on Lambda
+- [ ] Frontend live on CloudFront

@@ -55,7 +55,14 @@ def health_chatbot(payload: ChatMessage, db: Session = Depends(get_db)):
     # Step 3: Try Bedrock LLM
     try:
         # Use AWS_PROFILE session if configured (local dev), else default chain (Lambda)
-        if settings.AWS_PROFILE:
+        if settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY:
+            client = boto3.client(
+                "bedrock-runtime",
+                region_name=settings.AWS_REGION,
+                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            )
+        elif settings.AWS_PROFILE:
             session = boto3.Session(profile_name=settings.AWS_PROFILE)
             client = session.client("bedrock-runtime", region_name=settings.AWS_REGION)
         else:
