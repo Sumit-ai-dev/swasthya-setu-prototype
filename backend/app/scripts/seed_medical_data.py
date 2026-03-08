@@ -109,6 +109,17 @@ SAMPLE_MEDICAL_TEXTS = [
             "For severe hypertension, consult a doctor for medication alongside dietary changes."
         ),
     },
+    {
+        "source": "WHO & IMAI Clinical Emergency Standards 2024",
+        "content": (
+            "Clinical Emergency Signs (RED TRIAGE) requiring immediate hospital referral: "
+            "Chest pain (suspected heart attack or cardiac event), severe difficulty breathing or gasping, "
+            "unconsciousness or inability to wake up, sudden weakness on one side of the body (stroke sign), "
+            "severe profuse bleeding that won't stop, and ingestion of poison or toxic substances. "
+            "For chest pain: Keep the patient calm, do not allow physical exertion, and transport to a facility with ECG capability. "
+            "Any patient with airway, breathing, or circulation (ABC) compromise must be treated as an absolute emergency."
+        ),
+    },
 ]
 
 

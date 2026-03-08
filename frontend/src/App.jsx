@@ -4,10 +4,12 @@ import Triage from './components/Triage';
 import Chatbot from './components/Chatbot';
 import Analytics from './components/Analytics';
 import Hero from './components/Hero';
-import { ActivitySquare, MessageSquare, BarChart3, Sparkles } from 'lucide-react';
+import PatientDashboard from './components/PatientDashboard';
+import { ActivitySquare, MessageSquare, BarChart3, Sparkles, User, LogOut } from 'lucide-react';
 
 function App() {
     const [activeTab, setActiveTab] = useState('home');
+    const [selectedPatient, setSelectedPatient] = useState(null);
 
     // Scroll to top when tab changes
     const handleTabChange = (tab) => {
@@ -58,35 +60,65 @@ function App() {
                             </div>
                         </motion.div>
 
+                        {/* Selected Patient Info */}
+                        {selectedPatient && (
+                            <motion.div
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="hidden lg:flex items-center gap-4 bg-white/5 px-4 py-2 rounded-2xl border border-white/10"
+                            >
+                                <div className="bg-blue-500/20 p-2 rounded-lg">
+                                    <User className="w-4 h-4 text-blue-400" />
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-400 font-medium">Active Patient</p>
+                                    <p className="text-sm font-bold text-white">{selectedPatient.name}</p>
+                                </div>
+                                <button
+                                    onClick={() => setSelectedPatient(null)}
+                                    className="ml-2 p-1.5 hover:bg-white/10 rounded-lg text-gray-500 hover:text-red-400 transition-all"
+                                    title="Deselect Patient"
+                                >
+                                    <LogOut className="w-4 h-4" />
+                                </button>
+                            </motion.div>
+                        )}
+
                         {/* Navigation */}
                         <nav className="flex items-center gap-2">
                             {[
+                                { id: 'dashboard', icon: User, label: 'Patient Records' },
                                 { id: 'triage', icon: ActivitySquare, label: 'Triage' },
                                 { id: 'chatbot', icon: MessageSquare, label: 'AI Chat' },
                                 { id: 'analytics', icon: BarChart3, label: 'Analytics' }
-                            ].map((tab) => (
-                                <motion.button
-                                    key={tab.id}
-                                    onClick={() => handleTabChange(tab.id)}
-                                    className={`relative px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 transition-all ${
-                                        activeTab === tab.id
+                            ].map((tab) => {
+                                const isDisabled = (tab.id === 'triage' || tab.id === 'chatbot') && !selectedPatient;
+                                return (
+                                    <motion.button
+                                        key={tab.id}
+                                        onClick={() => !isDisabled && handleTabChange(tab.id)}
+                                        className={`relative px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 transition-all ${activeTab === tab.id
                                             ? 'text-white'
-                                            : 'text-gray-400 hover:text-white'
-                                    }`}
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                >
-                                    {activeTab === tab.id && (
-                                        <motion.div
-                                            layoutId="activeTab"
-                                            className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg"
-                                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                                        />
-                                    )}
-                                    <tab.icon className="w-4 h-4 relative z-10" />
-                                    <span className="hidden sm:inline relative z-10">{tab.label}</span>
-                                </motion.button>
-                            ))}
+                                            : isDisabled
+                                                ? 'text-gray-600 cursor-not-allowed'
+                                                : 'text-gray-400 hover:text-white'
+                                            }`}
+                                        whileHover={!isDisabled ? { scale: 1.05 } : {}}
+                                        whileTap={!isDisabled ? { scale: 0.95 } : {}}
+                                        title={isDisabled ? 'Please select a patient first' : ''}
+                                    >
+                                        {activeTab === tab.id && (
+                                            <motion.div
+                                                layoutId="activeTab"
+                                                className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg"
+                                                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                            />
+                                        )}
+                                        <tab.icon className="w-4 h-4 relative z-10" />
+                                        <span className="hidden sm:inline relative z-10">{tab.label}</span>
+                                    </motion.button>
+                                );
+                            })}
                         </nav>
                     </div>
                 </div>
@@ -103,8 +135,8 @@ function App() {
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.5 }}
                         >
-                            <Hero onGetStarted={() => handleTabChange('triage')} />
-                            
+                            <Hero onGetStarted={() => handleTabChange('dashboard')} />
+
                             {/* Quick Access Section */}
                             <div className="relative py-20 px-4">
                                 <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900" />
@@ -122,65 +154,89 @@ function App() {
                                             Access enterprise-grade healthcare AI tools
                                         </p>
                                     </motion.div>
-                                    
+
                                     <div className="grid md:grid-cols-3 gap-8">
                                         {[
-                                            { 
-                                                id: 'triage', 
-                                                icon: ActivitySquare, 
-                                                title: 'AI Triage System', 
-                                                desc: 'Intelligent symptom analysis with ML-powered priority classification',
+                                            {
+                                                id: 'dashboard',
+                                                icon: User,
+                                                title: 'Patient Records',
+                                                desc: 'Manage patient profiles and view comprehensive medical history',
                                                 gradient: 'from-blue-600 to-cyan-600'
                                             },
-                                            { 
-                                                id: 'chatbot', 
-                                                icon: MessageSquare, 
-                                                title: 'Medical AI Assistant', 
-                                                desc: 'RAG-powered conversational AI with vector search capabilities',
+                                            {
+                                                id: 'triage',
+                                                icon: ActivitySquare,
+                                                title: 'AI Triage System',
+                                                desc: 'Intelligent symptom analysis with ML-powered priority classification',
                                                 gradient: 'from-indigo-600 to-purple-600'
                                             },
-                                            { 
-                                                id: 'analytics', 
-                                                icon: BarChart3, 
-                                                title: 'Platform Analytics', 
-                                                desc: 'Real-time insights and performance metrics dashboard',
+                                            {
+                                                id: 'chatbot',
+                                                icon: MessageSquare,
+                                                title: 'Medical AI Assistant',
+                                                desc: 'Direct OpenAI-powered clinical intelligence for diagnostic support',
                                                 gradient: 'from-purple-600 to-pink-600'
                                             }
-                                        ].map((card, idx) => (
-                                            <motion.div
-                                                key={card.id}
-                                                initial={{ opacity: 0, y: 30 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: 0.4 + idx * 0.1 }}
-                                                whileHover={{ y: -12, scale: 1.02 }}
-                                                onClick={() => handleTabChange(card.id)}
-                                                className="group relative glass p-8 rounded-3xl cursor-pointer border border-white/10 hover:border-white/20 transition-all duration-300"
-                                            >
-                                                <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 rounded-3xl transition-opacity duration-300" />
-                                                
-                                                <div className={`w-16 h-16 bg-gradient-to-br ${card.gradient} rounded-2xl flex items-center justify-center mb-6 shadow-2xl group-hover:scale-110 transition-transform duration-300`}>
-                                                    <card.icon className="w-8 h-8 text-white" />
-                                                </div>
-                                                
-                                                <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-blue-400 transition-colors">
-                                                    {card.title}
-                                                </h3>
-                                                <p className="text-gray-400 leading-relaxed">
-                                                    {card.desc}
-                                                </p>
-                                                
-                                                <div className="mt-6 flex items-center text-blue-400 font-semibold group-hover:gap-3 gap-2 transition-all">
-                                                    <span>Launch</span>
-                                                    <span className="group-hover:translate-x-1 transition-transform">→</span>
-                                                </div>
-                                            </motion.div>
-                                        ))}
+                                        ].map((card, idx) => {
+                                            const isDisabled = (card.id === 'triage' || card.id === 'chatbot') && !selectedPatient;
+                                            return (
+                                                <motion.div
+                                                    key={card.id}
+                                                    initial={{ opacity: 0, y: 30 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ delay: 0.4 + idx * 0.1 }}
+                                                    whileHover={!isDisabled ? { y: -12, scale: 1.02 } : {}}
+                                                    onClick={() => !isDisabled && handleTabChange(card.id)}
+                                                    className={`group relative glass p-8 rounded-3xl border border-white/10 transition-all duration-300 ${isDisabled ? 'opacity-50 cursor-not-allowed grayscale' : 'cursor-pointer hover:border-white/20'
+                                                        }`}
+                                                    title={isDisabled ? 'Please select a patient first' : ''}
+                                                >
+                                                    <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 rounded-3xl transition-opacity duration-300" />
+
+                                                    <div className={`w-16 h-16 bg-gradient-to-br ${card.gradient} rounded-2xl flex items-center justify-center mb-6 shadow-2xl ${!isDisabled && 'group-hover:scale-110'} transition-transform duration-300`}>
+                                                        <card.icon className="w-8 h-8 text-white" />
+                                                    </div>
+
+                                                    <h3 className={`text-2xl font-bold mb-3 transition-colors ${isDisabled ? 'text-gray-400' : 'text-white group-hover:text-blue-400'}`}>
+                                                        {card.title}
+                                                    </h3>
+                                                    <p className="text-gray-400 leading-relaxed text-sm">
+                                                        {card.desc}
+                                                        {isDisabled && <span className="block mt-2 text-xs text-blue-400 font-semibold italic">Select a patient to unlock</span>}
+                                                    </p>
+
+                                                    <div className={`mt-6 flex items-center font-semibold transition-all ${isDisabled ? 'text-gray-600' : 'text-blue-400 group-hover:gap-3 gap-2'}`}>
+                                                        <span>{isDisabled ? 'Locked' : 'Launch'}</span>
+                                                        <span className={!isDisabled ? "group-hover:translate-x-1 transition-transform" : ""}>{!isDisabled ? '→' : '🔒'}</span>
+                                                    </div>
+                                                </motion.div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             </div>
                         </motion.div>
                     )}
-                    
+
+                    {activeTab === 'dashboard' && (
+                        <motion.div
+                            key="dashboard"
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            transition={{ duration: 0.4 }}
+                            className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4 py-12 min-h-screen"
+                        >
+                            <PatientDashboard
+                                onSelectPatient={(p) => {
+                                    setSelectedPatient(p);
+                                    handleTabChange('triage');
+                                }}
+                            />
+                        </motion.div>
+                    )}
+
                     {activeTab === 'triage' && (
                         <motion.div
                             key="triage"
@@ -190,10 +246,10 @@ function App() {
                             transition={{ duration: 0.4 }}
                             className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-12 px-4"
                         >
-                            <Triage />
+                            <Triage patient={selectedPatient} />
                         </motion.div>
                     )}
-                    
+
                     {activeTab === 'chatbot' && (
                         <motion.div
                             key="chatbot"
@@ -203,10 +259,10 @@ function App() {
                             transition={{ duration: 0.4 }}
                             className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4 py-12"
                         >
-                            <Chatbot />
+                            <Chatbot patient={selectedPatient} />
                         </motion.div>
                     )}
-                    
+
                     {activeTab === 'analytics' && (
                         <motion.div
                             key="analytics"

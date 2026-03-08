@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { submitTriage } from '../api';
 import { AlertCircle, CheckCircle2, Info, Loader2, Plus, X } from 'lucide-react';
 
-export default function Triage() {
+export default function Triage({ patient }) {
     const [symptomInput, setSymptomInput] = useState('');
     const [symptoms, setSymptoms] = useState([]);
     const [language, setLanguage] = useState('en');
@@ -31,7 +31,7 @@ export default function Triage() {
         setLoading(true);
         setError('');
         try {
-            const data = await submitTriage(symptoms, language);
+            const data = await submitTriage(symptoms, language, patient?.id);
             setResult(data);
         } catch (err) {
             setError('Failed to reach triage service. Please try again.');
@@ -71,7 +71,7 @@ export default function Triage() {
                     transition={{ delay: 0.2 }}
                     className="text-4xl font-bold text-white mb-2"
                 >
-                    AI Symptom Triage
+                    AI Symptom Triage {patient && <span className="text-blue-400">· {patient.name}</span>}
                 </motion.h2>
                 <p className="text-gray-400 mb-8">Intelligent priority classification powered by machine learning</p>
 

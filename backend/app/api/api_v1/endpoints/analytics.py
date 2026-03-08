@@ -5,7 +5,7 @@ from datetime import datetime, date
 
 from app.schemas.analytics import AnalyticsSummary
 from app.db.database import get_db
-from app.db.models import Consultation
+from app.db.models import Consultation, Patient
 
 router = APIRouter()
 
@@ -34,9 +34,13 @@ def analytics_summary(db: Session = Depends(get_db)):
         func.date(Consultation.created_at) == today
     ).scalar()
 
+    # 4. Pregnant Patients Count
+    pregnant_count = db.query(Patient).filter(Patient.is_pregnant == True).count()
+
     return AnalyticsSummary(
         total_consultations=total,
         triage_distribution=distribution,
         daily_active_users=dau or 0,
-        avg_response_time="1.2s" # Keep as optimized placeholder for MVP
+        avg_response_time="1.2s", # Keep as optimized placeholder for MVP
+        pregnant_patients_count=pregnant_count
     )

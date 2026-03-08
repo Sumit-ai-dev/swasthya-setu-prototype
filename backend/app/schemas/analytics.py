@@ -7,3 +7,4 @@ class AnalyticsSummary(BaseModel):
     triage_distribution: Dict[str, int]   # {"GREEN": x, "YELLOW": y, "RED": z}
     daily_active_users: int
     avg_response_time: str
+    pregnant_patients_count: int

@@ -1,11 +1,11 @@
 # Core API
-fastapi==0.131.0
-uvicorn==0.40.0
-pydantic==2.12.5
-pydantic-settings==2.13.1
-python-dotenv==1.2.1
-python-multipart==0.0.20
-mangum==0.21.0
+fastapi
+uvicorn
+pydantic
+pydantic-settings
+python-dotenv
+python-multipart
+mangum
 
 # Database
 SQLAlchemy==2.0.46
@@ -13,15 +13,16 @@ psycopg2-binary==2.9.11
 pgvector==0.3.6
 
 # AI & RAG
-boto3>=1.42.0
 langchain>=0.1.0
-langchain-aws>=0.2.0
 langchain-community>=0.2.0
 langchain-postgres>=0.0.12
 langchain-text-splitters>=0.2.0
 sentence-transformers>=3.0.0
 torch>=2.0.0
 
-# LLM logic
-boto3
-botocore
+# LLM (OpenRouter via OpenAI-compatible API)
+openai>=1.0.0
+
+# AWS (only needed for Bedrock embeddings)
+boto3>=1.42.0
+langchain-aws>=0.2.0

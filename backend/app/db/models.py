@@ -10,7 +10,8 @@ for the actual vector store operations. This model is kept for:
 """
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, DateTime, Text, Integer
+from sqlalchemy import Column, String, DateTime, Text, Integer, ForeignKey, Boolean
+from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 from pgvector.sqlalchemy import Vector
 from app.db.database import Base
@@ -44,11 +45,30 @@ class MedicalDocumentChunk(Base):
         return f"<MedicalDocumentChunk id={self.id} source={self.source}>"
 
 
+class Patient(Base):
+    """Stores patient profile information."""
+    __tablename__ = "patients"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    name = Column(String, nullable=False)
+    age = Column(Integer)
+    gender = Column(String)
+    is_pregnant = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    consultations = relationship("Consultation", back_populates="patient", cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f"<Patient id={self.id} name={self.name}>"
+
+
 class Consultation(Base):
     """Stores every triage and chatbot interaction for analytics."""
     __tablename__ = "consultations"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    patient_id = Column(UUID(as_uuid=True), ForeignKey("patients.id"), nullable=True, index=True)
     session_id = Column(String, index=True)
     type = Column(String) # "TRIAGE" or "CHAT"
     triage_level = Column(String, nullable=True) # GREEN, YELLOW, RED (only for triage)
@@ -56,6 +76,9 @@ class Consultation(Base):
     response = Column(Text)
     language = Column(String, default="en")
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    patient = relationship("Patient", back_populates="consultations")
 
     def __repr__(self):
         return f"<Consultation id={self.id} type={self.type} level={self.triage_level}>"

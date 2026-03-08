@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import List, Optional
+from uuid import UUID
 
 
 class TriageRequest(BaseModel):
@@ -7,6 +8,7 @@ class TriageRequest(BaseModel):
     language: str = "en"  # "en" or "hi"
     age: Optional[int] = None
     gender: Optional[str] = None
+    patient_id: Optional[UUID] = None
 
 
 class TriageResponse(BaseModel):

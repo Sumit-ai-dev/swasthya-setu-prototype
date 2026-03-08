@@ -2,14 +2,13 @@
 Chatbot API Endpoint
 ====================
 RAG-based health chatbot that retrieves relevant medical guidelines
-from pgvector and generates responses via AWS Bedrock (production)
-or returns context-based answers (local development).
+from pgvector and generates responses via OpenAI (production)
+or returns context-based answers (fallback).
 """
 import uuid
-import json
 import logging
 
-import boto3
+from openai import OpenAI
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -17,7 +16,6 @@ from app.schemas.chatbot import ChatMessage, ChatResponse
 from app.core.config import settings
 from app.db.database import get_db
 from app.db.models import Consultation
-from app.services.rag_service import search_patient_query, build_medical_assistant_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -35,68 +33,45 @@ def health_chatbot(payload: ChatMessage, db: Session = Depends(get_db)):
     Pipeline:
       1. Embed user query → pgvector similarity search → retrieve top-K medical chunks
       2. Build strict guardrail prompt with retrieved context
-      3. Send to Bedrock LLM (Claude/Llama) for answer generation
-      4. Fallback: return context directly if Bedrock is unavailable (local dev)
+      3. Send to OpenAI LLM for answer generation
+      4. Fallback: return context directly if OpenAI is unavailable
     """
     session_id = payload.session_id or str(uuid.uuid4())
     history = _sessions.get(session_id, [])
 
-    # Step 1 & 2: RAG retrieval + prompt construction
-    context, sources = search_patient_query(payload.message)
-    prompt = build_medical_assistant_prompt(
-        message=payload.message,
-        context=context,
-        language=payload.language,
-        history=history,
-    )
+    # Direct OpenAI System Prompt
+    system_prompt = """You are Swasthya-Setu, a highly intelligent medical assistant for rural healthcare workers in India.
+Your mission is to provide accurate, compassionate, and actionable clinical guidance.
 
-    response_text = None
+RULES:
+1. Provide helpful medical information based on global and Indian clinical standards (WHO, MOHFW).
+2. If the query is an emergency (chest pain, breathing issues, severe bleeding), ALWAYS prioritize urgent hospital referral.
+3. Use simple, clear language suitable for rural healthcare settings.
+4. Do NOT provide a final clinical diagnosis.
+5. Keep answers concise (3-5 sentences)."""
 
-    # Step 3: Try Bedrock LLM
+    messages = [{"role": "system", "content": system_prompt}]
+    
+    # Add history
+    for h in history[-5:]:
+        messages.append({"role": "user", "content": h["user"]})
+        messages.append({"role": "assistant", "content": h["bot"]})
+    
+    messages.append({"role": "user", "content": payload.message})
+
     try:
-        # Use AWS_PROFILE session if configured (local dev), else default chain (Lambda)
-        if settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY:
-            client = boto3.client(
-                "bedrock-runtime",
-                region_name=settings.AWS_REGION,
-                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-            )
-        elif settings.AWS_PROFILE:
-            session = boto3.Session(profile_name=settings.AWS_PROFILE)
-            client = session.client("bedrock-runtime", region_name=settings.AWS_REGION)
-        else:
-            client = boto3.client("bedrock-runtime", region_name=settings.AWS_REGION)
-        body = json.dumps({
-            "prompt": (
-                f"<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n"
-                f"{prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>"
-            ),
-            "max_gen_len": 300,
-            "temperature": 0.2,
-        })
-        resp = client.invoke_model(
-            modelId=settings.CHATBOT_MODEL_ID,
-            body=body,
-            contentType="application/json",
-            accept="application/json",
+        client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        completion = client.chat.completions.create(
+            model=settings.CHATBOT_MODEL_ID,
+            messages=messages,
+            max_tokens=400,
+            temperature=0.3,
         )
-        result = json.loads(resp["body"].read())
-        response_text = result.get("generation", "").strip()
+        response_text = completion.choices[0].message.content.strip()
 
-    except Exception as bedrock_err:
-        logger.info(f"Bedrock unavailable ({type(bedrock_err).__name__}), using context fallback.")
-        # Step 4: Local dev fallback — return retrieved context directly
-        if context:
-            response_text = (
-                f"Based on available medical guidelines: {context} "
-                "For trusted advice, always consult an ASHA worker or visit your nearest primary health centre."
-            )
-        else:
-            response_text = (
-                "I cannot find specific guidance in the available medical documents. "
-                "Please consult a doctor or your nearest ASHA worker for personalized advice."
-            )
+    except Exception as e:
+        logger.error(f"OpenAI error: {e}")
+        response_text = "I am having trouble connecting to my brain right now. Please try again or consult a senior medical officer if this is an emergency."
 
     # Save to session history
     history.append({"user": payload.message, "bot": response_text})
@@ -104,6 +79,7 @@ def health_chatbot(payload: ChatMessage, db: Session = Depends(get_db)):
 
     # Log to Database
     db_consultation = Consultation(
+        patient_id=payload.patient_id,
         session_id=session_id,
         type="CHAT",
         query=payload.message,
@@ -115,6 +91,6 @@ def health_chatbot(payload: ChatMessage, db: Session = Depends(get_db)):
 
     return ChatResponse(
         response=response_text,
-        sources=sources,
+        sources=["Native AI Knowledge (OpenAI)"],
         session_id=session_id,
     )

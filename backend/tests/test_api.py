@@ -106,3 +106,35 @@ class TestAnalyticsEndpoint:
         assert "GREEN" in dist
         assert "YELLOW" in dist
         assert "RED" in dist
+
+class TestPatientRestrictions:
+    def test_create_male_patient_fails(self):
+        resp = client.post("/api/v1/patients/", json={
+            "name": "John Doe",
+            "age": 30,
+            "gender": "Male"
+        })
+        assert resp.status_code == 422
+        assert "Only female patients are allowed" in str(resp.json())
+
+    def test_create_underage_patient_fails(self):
+        resp = client.post("/api/v1/patients/", json={
+            "name": "Jane Smith",
+            "age": 17,
+            "gender": "Female"
+        })
+        assert resp.status_code == 422
+        assert "18 years or older" in str(resp.json())
+
+    def test_create_valid_female_patient_succeeds(self):
+        # This might fail if DB is down, but the schema validation (Pydantic) 
+        # should happen before DB insertion in FastAPI if using Depends or payload validation.
+        # Actually, PatientCreate validation happens during payload parsing.
+        resp = client.post("/api/v1/patients/", json={
+            "name": "Jane Doe",
+            "age": 25,
+            "gender": "Female"
+        })
+        # If DB is down, it might return 500 or OperationalError, 
+        # but if we just want to test Pydantic, we can check 422 vs others.
+        assert resp.status_code != 422 

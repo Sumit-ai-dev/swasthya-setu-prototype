@@ -3,9 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { sendChatMessage } from '../api';
 import { Send, Bot, BookOpen, Sparkles } from 'lucide-react';
 
-export default function Chatbot() {
+export default function Chatbot({ patient }) {
     const [messages, setMessages] = useState([
-        { role: 'bot', text: 'Hello, I am Swasthya-Setu. How can I help you today? / नमस्ते, मैं स्वास्थ्य-सेतु हूँ। मैं आज आपकी कैसे मदद कर सकता हूँ?', language: 'en' }
+        { role: 'bot', text: 'Hello! I am your Swasthya-Setu AI Assistant. I can help you with medical guidelines, triage, and clinical questions. How can I support you today? \n\nनमस्ते! मैं आपका स्वास्थ्य-सेतु एआई सहायक हूँ। मैं चिकित्सा दिशानिर्देशों, ट्राइएज और नैदानिक सवालों में आपकी मदद कर सकता हूँ। मैं आज आपकी कैसे सहायता कर सकता हूँ?', language: 'en' }
     ]);
     const [input, setInput] = useState('');
     const [language, setLanguage] = useState('en');
@@ -28,7 +28,7 @@ export default function Chatbot() {
         setLoading(true);
 
         try {
-            const data = await sendChatMessage(userMessage, language, sessionId);
+            const data = await sendChatMessage(userMessage, language, sessionId, patient?.id);
             if (!sessionId) setSessionId(data.session_id);
 
             setMessages(prev => [...prev, {
@@ -63,9 +63,9 @@ export default function Chatbot() {
                         </motion.div>
                         <div>
                             <h2 className="text-3xl font-bold text-white">
-                                Medical AI Assistant
+                                Medical AI Assistant {patient && <span className="text-blue-400">· {patient.name}</span>}
                             </h2>
-                            <p className="text-sm text-gray-400">Powered by RAG Technology</p>
+                            <p className="text-sm text-gray-400">Powered by Direct AI Intelligence</p>
                         </div>
                     </div>
                     <select
@@ -92,13 +92,12 @@ export default function Chatbot() {
                             >
                                 <motion.div
                                     whileHover={{ scale: 1.02 }}
-                                    className={`max-w-[85%] rounded-2xl p-5 shadow-lg ${
-                                        msg.role === 'user'
-                                            ? 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-tr-none'
-                                            : msg.isError
+                                    className={`max-w-[85%] rounded-2xl p-5 shadow-lg ${msg.role === 'user'
+                                        ? 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-tr-none'
+                                        : msg.isError
                                             ? 'glass border-2 border-red-500/50 text-red-300 rounded-tl-none'
                                             : 'glass rounded-tl-none text-white border border-white/10'
-                                    }`}
+                                        }`}
                                 >
                                     <div className="flex items-start gap-3">
                                         {msg.role === 'bot' && (

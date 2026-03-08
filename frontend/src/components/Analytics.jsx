@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { getAnalyticsSummary } from '../api';
-import { Activity, Users, Clock, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Activity, Users, Clock, AlertTriangle, TrendingUp, HeartPulse } from 'lucide-react';
 
 export default function Analytics() {
     const [stats, setStats] = useState(null);
@@ -53,7 +53,7 @@ export default function Analytics() {
                 {[
                     { icon: Activity, label: 'Total Consultations', value: stats.total_consultations, color: 'from-blue-500 to-blue-600', delay: 0.1 },
                     { icon: Users, label: 'Daily Active Users', value: stats.daily_active_users, color: 'from-indigo-500 to-indigo-600', delay: 0.2 },
-                    { icon: Clock, label: 'Avg Response Time', value: stats.avg_response_time, color: 'from-purple-500 to-purple-600', delay: 0.3 }
+                    { icon: HeartPulse, label: 'Pregnant Patients', value: stats.pregnant_patients_count || 0, color: 'from-pink-500 to-rose-600', delay: 0.3 }
                 ].map((stat, idx) => (
                     <motion.div
                         key={idx}

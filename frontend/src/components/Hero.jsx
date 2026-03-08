@@ -1,14 +1,17 @@
-import React, { Suspense, useState, useEffect } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Activity, Shield, Zap, ArrowRight, CheckCircle2, Brain, Database } from 'lucide-react';
-import MedicalBackground3D from './MedicalBackground3D';
 
 export default function Hero({ onGetStarted }) {
     return (
         <div className="relative min-h-screen overflow-hidden">
-            {/* Medical 3D Background */}
-            <MedicalBackground3D />
-            
+            {/* Lightweight animated background */}
+            <div className="absolute inset-0 bg-slate-900">
+                <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl animate-pulse" />
+                <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-indigo-600/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+                <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-purple-600/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+            </div>
+
             {/* Gradient Overlay - lighter to see 3D */}
             <div className="absolute inset-0 bg-gradient-to-br from-slate-900/80 via-indigo-950/70 to-slate-900/80 z-10">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(99,102,241,0.15),transparent_50%)]" />
@@ -34,7 +37,7 @@ export default function Hero({ onGetStarted }) {
                             className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-xl rounded-full border border-white/10 mx-auto"
                         >
                             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                            <span className="text-sm font-medium text-gray-300">Powered by AWS Bedrock & PGVector</span>
+                            <span className="text-sm font-medium text-gray-300">Powered by OpenAI & PGVector</span>
                         </motion.div>
 
                         <motion.div
@@ -58,7 +61,7 @@ export default function Hero({ onGetStarted }) {
                             transition={{ delay: 0.4 }}
                             className="text-xl text-gray-300 leading-relaxed"
                         >
-                            Enterprise-grade AI triage and medical guidance system. 
+                            Enterprise-grade AI triage and medical guidance system.
                             Leveraging RAG architecture for accurate, context-aware health insights in multiple languages.
                         </motion.p>
 
@@ -68,7 +71,7 @@ export default function Hero({ onGetStarted }) {
                             transition={{ delay: 0.5 }}
                             className="flex justify-center"
                         >
-                            <button 
+                            <button
                                 onClick={onGetStarted}
                                 className="group px-10 py-5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl font-bold text-xl shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 flex items-center gap-3 hover:scale-105 active:scale-95"
                             >
@@ -84,7 +87,7 @@ export default function Hero({ onGetStarted }) {
                             className="grid grid-cols-3 gap-8 pt-8 border-t border-white/10 max-w-2xl mx-auto"
                         >
                             {[
-                                { icon: Brain, label: 'AI-Powered', value: 'Bedrock' },
+                                { icon: Brain, label: 'AI-Powered', value: 'OpenRouter' },
                                 { icon: Database, label: 'Vector DB', value: 'PGVector' },
                                 { icon: Zap, label: 'Response', value: '<2s' }
                             ].map((stat, idx) => (

@@ -1,12 +1,16 @@
 import uuid
 import json
-import boto3
-from fastapi import APIRouter, HTTPException, Depends
+import logging
+
+from openai import OpenAI
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.schemas.triage import TriageRequest, TriageResponse
 from app.core.config import settings
 from app.db.database import get_db
 from app.db.models import Consultation
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -43,37 +47,33 @@ Return ONLY the JSON. No explanation outside the JSON."""
 def symptom_triage(payload: TriageRequest, db: Session = Depends(get_db)):
     """
     Accepts symptoms and returns a triage classification (GREEN/YELLOW/RED)
-    using Amazon Bedrock (Claude 3 Haiku).
+    using OpenAI LLM.
 
-    Falls back to rule-based classification when Bedrock is unavailable (local dev).
+    Falls back to rule-based classification when OpenAI is unavailable.
     """
     prompt = _build_triage_prompt(payload.symptoms, payload.language)
 
     try:
-        # Use explicit credentials if provided in .env
-        client_kwargs = {
-            "service_name": "bedrock-runtime",
-            "region_name": settings.AWS_REGION,
-        }
-        if settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY:
-            client_kwargs["aws_access_key_id"] = settings.AWS_ACCESS_KEY_ID
-            client_kwargs["aws_secret_access_key"] = settings.AWS_SECRET_ACCESS_KEY
-        
-        client = boto3.client(**client_kwargs)
-        body = json.dumps({
-            "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": 256,
-            "temperature": 0.1,
-            "messages": [{"role": "user", "content": prompt}]
-        })
-        response = client.invoke_model(
-            modelId=settings.TRIAGE_MODEL_ID,
-            body=body,
-            contentType="application/json",
-            accept="application/json",
+        client = OpenAI(api_key=settings.OPENAI_API_KEY)
+
+        completion = client.chat.completions.create(
+            model=settings.TRIAGE_MODEL_ID,
+            messages=[
+                {"role": "system", "content": "You are a WHO-standard clinical triage assistant. Return only valid JSON."},
+                {"role": "user", "content": prompt},
+            ],
+            max_tokens=256,
+            temperature=0.1,
         )
-        result = json.loads(response["body"].read())
-        text = result["content"][0]["text"]
+
+        text = completion.choices[0].message.content.strip()
+        # Strip markdown code fences if present
+        if text.startswith("```"):
+            text = text.split("\n", 1)[1] if "\n" in text else text[3:]
+            if text.endswith("```"):
+                text = text[:-3]
+            text = text.strip()
+
         parsed = json.loads(text)
 
         consultation_id = str(uuid.uuid4())
@@ -81,7 +81,8 @@ def symptom_triage(payload: TriageRequest, db: Session = Depends(get_db)):
         # Log to Database
         db_consultation = Consultation(
             id=uuid.UUID(consultation_id),
-            session_id=consultation_id, # Link session to ID for now
+            patient_id=payload.patient_id,
+            session_id=consultation_id,
             type="TRIAGE",
             triage_level=parsed["triage_level"],
             query=", ".join(payload.symptoms),
@@ -99,7 +100,8 @@ def symptom_triage(payload: TriageRequest, db: Session = Depends(get_db)):
             consultation_id=consultation_id,
         )
 
-    except Exception:
+    except Exception as e:
+        logger.info(f"OpenAI unavailable ({type(e).__name__}: {e}), using WHO rule-based fallback.")
         # --- Local dev fallback (WHO-based rules) ---
         symptoms_lower = [s.lower() for s in payload.symptoms]
         
@@ -110,7 +112,7 @@ def symptom_triage(payload: TriageRequest, db: Session = Depends(get_db)):
             "cancer", "lump", "mass", "tumor"
         ]
         
-        # WHO Priority Signs (YELLOW) - Including Oncology/Chronic indicators
+        # WHO Priority Signs (YELLOW)
         priority_signs = [
             "weight loss", "persistent fever", 
             "severe pain", "diabetes", "heart disease", "vision loss", 
@@ -144,6 +146,7 @@ def symptom_triage(payload: TriageRequest, db: Session = Depends(get_db)):
         # Log to Database
         db_consultation = Consultation(
             id=uuid.UUID(consultation_id),
+            patient_id=payload.patient_id,
             session_id=consultation_id,
             type="TRIAGE",
             triage_level=level,

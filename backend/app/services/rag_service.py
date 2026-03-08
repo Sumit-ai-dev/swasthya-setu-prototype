@@ -37,7 +37,7 @@ def _init_embeddings():
             EMBEDDING_DIM = 1024  # Titan v2 dimension
             emb = BedrockEmbeddings(
                 model_id="amazon.titan-embed-text-v2:0",
-                region_name=settings.AWS_REGION,
+                region_name=settings.BEDROCK_REGION,
                 model_kwargs={"max_retries": 3} # Explicit retry logic
             )
             logger.info("Using AWS Bedrock Titan embeddings (dim=1024) with backoff retries.")
@@ -46,7 +46,7 @@ def _init_embeddings():
             logger.warning(f"Bedrock embeddings failed ({e}). Falling back to local embeddings.")
 
     # Default: local HuggingFace sentence-transformers
-    from langchain_huggingface import HuggingFaceEmbeddings
+    from langchain_community.embeddings import HuggingFaceEmbeddings
     EMBEDDING_DIM = 384
     emb = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_LOCAL)
     logger.info(f"Using local HuggingFace embeddings: {EMBEDDING_MODEL_LOCAL} (dim={EMBEDDING_DIM}).")
@@ -72,7 +72,7 @@ vector_store = PGVector(
 def search_patient_query(
     query: str,
     top_k: int = 4,
-    threshold: float = 0.3,
+    threshold: float = 0.2,
     document_type: str = "guideline"
 ) -> Tuple[str, List[str]]:
     """
@@ -144,15 +144,17 @@ def build_medical_assistant_prompt(
     if not context:
         context = "No relevant medical guidelines were found in the database."
 
-    return f"""You are Swasthya-Setu, a medical assistant supporting rural healthcare workers in India.
+    return f"""You are Swasthya-Setu, a highly intelligent medical assistant for rural healthcare workers in India.
+
+ROLE:
+Provide helpful, compassionate, and accurate health information based primarily on provided guidelines.
 
 RULES:
-1. Use ONLY the information provided in the context.
-2. If the answer is not present in the context, say EXACTLY:
-   "I cannot find this information in the available medical guidelines. Please consult a doctor."
-3. Do NOT provide medical diagnosis.
-4. Do NOT invent information.
-5. Always cite the source provided in the context.
+1. If the information is in the Context below, prioritize it and cite the source.
+2. If the context does not contain the answer, use your general clinical knowledge to provide helpful guidance, but state clearly: "While this isn't in our local handbook, the general medical recommendation is..."
+3. If the query is about an emergency (chest pain, breathing issues), ALWAYS prioritize urgent hospital referral.
+4. Do NOT provide a final clinical diagnosis.
+5. KEEP ANSWERS SIMPLE and actionable for rural users.
 
 Context:
 {context}
@@ -160,4 +162,4 @@ Context:
 Question: {message}
 
 {lang_instruction}
-Keep your answer clear, concise (2-4 sentences), and accurate."""
+Keep your answer clear, empathetic, and strictly limited to 3-5 sentences."""

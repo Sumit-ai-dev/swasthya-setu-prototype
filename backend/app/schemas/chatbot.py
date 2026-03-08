@@ -1,12 +1,13 @@
 from pydantic import BaseModel
 from typing import List, Optional
+from uuid import UUID
 
 
 class ChatMessage(BaseModel):
     message: str
     language: str = "en"
     session_id: Optional[str] = None   # For conversation context
-    consultation_id: Optional[str] = None
+    patient_id: Optional[UUID] = None
 
 
 class ChatResponse(BaseModel):
