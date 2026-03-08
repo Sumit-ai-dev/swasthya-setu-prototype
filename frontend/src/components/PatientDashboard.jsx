@@ -151,7 +151,7 @@ export default function PatientDashboard({ onSelectPatient }) {
                             <div className="mt-6 flex items-center justify-between">
                                 <span className="text-xs text-gray-500 flex items-center gap-1">
                                     <Clock className="w-3 h-3" />
-                                    Added {new Date(patient.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                                    Added {new Date(patient.created_at + 'Z').toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                                 </span>
                                 <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-blue-400 group-hover:translate-x-1 transition-all" />
                             </div>
